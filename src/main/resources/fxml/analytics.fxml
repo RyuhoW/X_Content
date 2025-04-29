@@ -1,2 +1,76 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Label xmlns="http://javafx.com/javafx" text="Analytics Coming Soon"/>
+
+<?import javafx.scene.chart.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.xcontent.controller.AnalyticsController"
+      spacing="10" styleClass="analytics-view">
+
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20"/>
+    </padding>
+
+    <!-- Filter Section -->
+    <HBox spacing="10" alignment="CENTER_LEFT">
+        <Label text="Date Range:"/>
+        <ComboBox fx:id="dateRangeSelector" prefWidth="150"/>
+        <Label text="Account:"/>
+        <ComboBox fx:id="accountSelector" prefWidth="150"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button text="Export Report" onAction="#handleExportReport"/>
+    </HBox>
+
+    <!-- Overview Cards -->
+    <GridPane hgap="10" vgap="10">
+        <VBox styleClass="stat-card" GridPane.columnIndex="0" GridPane.rowIndex="0">
+            <Label text="Total Impressions"/>
+            <Label fx:id="totalImpressions" styleClass="stat-value" text="0"/>
+        </VBox>
+        <VBox styleClass="stat-card" GridPane.columnIndex="1" GridPane.rowIndex="0">
+            <Label text="Total Engagements"/>
+            <Label fx:id="totalEngagements" styleClass="stat-value" text="0"/>
+        </VBox>
+        <VBox styleClass="stat-card" GridPane.columnIndex="2" GridPane.rowIndex="0">
+            <Label text="Engagement Rate"/>
+            <Label fx:id="engagementRate" styleClass="stat-value" text="0%"/>
+        </VBox>
+        <VBox styleClass="stat-card" GridPane.columnIndex="3" GridPane.rowIndex="0">
+            <Label text="Profile Clicks"/>
+            <Label fx:id="profileClicks" styleClass="stat-value" text="0"/>
+        </VBox>
+    </GridPane>
+
+    <!-- Charts -->
+    <TabPane>
+        <Tab text="Engagement Over Time" closable="false">
+            <LineChart fx:id="engagementChart">
+                <xAxis>
+                    <CategoryAxis label="Date"/>
+                </xAxis>
+                <yAxis>
+                    <NumberAxis label="Engagements"/>
+                </yAxis>
+            </LineChart>
+        </Tab>
+        <Tab text="Engagement Breakdown" closable="false">
+            <PieChart fx:id="engagementBreakdown"/>
+        </Tab>
+    </TabPane>
+
+    <!-- Top Posts Table -->
+    <TitledPane text="Top Performing Posts" expanded="true">
+        <TableView fx:id="topPostsTable">
+            <columns>
+                <TableColumn fx:id="dateColumn" text="Date"/>
+                <TableColumn fx:id="contentColumn" text="Content"/>
+                <TableColumn fx:id="impressionsColumn" text="Impressions"/>
+                <TableColumn fx:id="engagementColumn" text="Engagement"/>
+                <TableColumn fx:id="rateColumn" text="Rate"/>
+            </columns>
+        </TableView>
+    </TitledPane>
+</VBox>
