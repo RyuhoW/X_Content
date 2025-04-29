@@ -32,3 +32,6 @@ logs/
 # OS specific
 .DS_Store
 Thumbs.db
+
+# Application specific
+application-local.properties
