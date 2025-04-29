@@ -8,77 +8,26 @@
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.xcontent.controller.MainWindowController"
       fx:id="mainContainer"
-      prefHeight="800.0" prefWidth="1200.0"
+      prefHeight="600.0" prefWidth="800.0"
       styleClass="main-window">
 
     <MenuBar>
         <Menu text="File">
-            <MenuItem text="New Content" onAction="#handleNewContent"/>
-            <MenuItem text="Schedule" onAction="#handleSchedule"/>
-            <MenuItem text="Analytics" onAction="#handleAnalytics"/>
-            <SeparatorMenuItem/>
-            <MenuItem text="Settings" onAction="#handleSettings"/>
-            <SeparatorMenuItem/>
             <MenuItem text="Exit" onAction="#handleExit"/>
         </Menu>
-        <Menu text="Account">
-            <MenuItem text="Switch Account" onAction="#handleSwitchAccount"/>
-            <MenuItem text="Manage Accounts" onAction="#handleManageAccounts"/>
-        </Menu>
         <Menu text="Help">
-            <MenuItem text="Documentation" onAction="#handleDocumentation"/>
-            <MenuItem text="About" onAction="#handleAbout"/>
+            <MenuItem text="About"/>
         </Menu>
     </MenuBar>
 
-    <SplitPane VBox.vgrow="ALWAYS">
-        <!-- Left Sidebar -->
-        <VBox styleClass="sidebar" prefWidth="250">
-            <padding>
-                <Insets top="20" right="10" bottom="20" left="10"/>
-            </padding>
-            
-            <!-- Account Selector -->
-            <ComboBox fx:id="accountSelector" maxWidth="Infinity" promptText="Select Account"/>
-            
-            <Separator>
-                <padding>
-                    <Insets top="10" bottom="10"/>
-                </padding>
-            </Separator>
-            
-            <!-- Navigation Buttons -->
-            <VBox spacing="10">
-                <Button text="Dashboard" maxWidth="Infinity" onAction="#handleDashboard" styleClass="nav-button"/>
-                <Button text="New Content" maxWidth="Infinity" onAction="#handleNewContent" styleClass="nav-button"/>
-                <Button text="Schedule" maxWidth="Infinity" onAction="#handleSchedule" styleClass="nav-button"/>
-                <Button text="Analytics" maxWidth="Infinity" onAction="#handleAnalytics" styleClass="nav-button"/>
-                <Button text="Templates" maxWidth="Infinity" onAction="#handleTemplates" styleClass="nav-button"/>
-            </VBox>
-            
-            <Region VBox.vgrow="ALWAYS"/>
-            
-            <!-- Status Section -->
-            <VBox styleClass="status-section">
-                <Label fx:id="userNameLabel" text="User: Not logged in"/>
-                <Label fx:id="planLabel" text="Plan: Free"/>
-            </VBox>
-        </VBox>
+    <StackPane VBox.vgrow="ALWAYS" styleClass="content-area">
+        <Label text="Welcome to X.com Content Generator" styleClass="welcome-text"/>
+    </StackPane>
 
-        <!-- Main Content Area -->
-        <StackPane fx:id="contentArea" styleClass="content-area">
-            <!-- Content will be loaded dynamically -->
-            <TabPane fx:id="mainTabPane" tabClosingPolicy="ALL_TABS"/>
-        </StackPane>
-    </SplitPane>
-
-    <!-- Status Bar -->
     <HBox styleClass="status-bar">
         <padding>
             <Insets top="5" right="10" bottom="5" left="10"/>
         </padding>
         <Label fx:id="statusLabel" text="Ready"/>
-        <Region HBox.hgrow="ALWAYS"/>
-        <Label fx:id="connectionStatus" text="Connected"/>
     </HBox>
 </VBox> 

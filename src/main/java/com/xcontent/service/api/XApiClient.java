@@ -77,5 +77,28 @@ public class XApiClient {
         private String created_at;
 
         // Getters and setters
+        public String getId() {
+            return id;
+        }
+
+        public void setId(String id) {
+            this.id = id;
+        }
+
+        public String getText() {
+            return text;
+        }
+
+        public void setText(String text) {
+            this.text = text;
+        }
+
+        public String getCreatedAt() {
+            return created_at;
+        }
+
+        public void setCreatedAt(String createdAt) {
+            this.created_at = createdAt;
+        }
     }
 } 
