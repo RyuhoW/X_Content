@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox spacing="10" xmlns:fx="http://javafx.com/fxml/1" 
+      fx:controller="com.xcontent.controller.AnalyticsController">
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20"/>
+    </padding>
+
+    <HBox spacing="10" alignment="CENTER_LEFT">
+        <Label text="Analytics Dashboard" styleClass="title-text"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <DatePicker fx:id="startDate" promptText="Start Date"/>
+        <DatePicker fx:id="endDate" promptText="End Date"/>
+        <Button text="Update" onAction="#handleUpdate"/>
+        <Button text="Export" onAction="#handleExport"/>
+    </HBox>
+
+    <TabPane VBox.vgrow="ALWAYS">
+        <Tab text="Overview" closable="false">
+            <VBox spacing="10">
+                <GridPane hgap="10" vgap="10">
+                    <Label text="Total Impressions:" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                    <Label fx:id="totalImpressionsLabel" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                    
+                    <Label text="Average Engagement Rate:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                    <Label fx:id="avgEngagementLabel" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                    
+                    <Label text="Total Engagements:" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                    <Label fx:id="totalEngagementsLabel" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                </GridPane>
+                
+                <fx:include source="PerformanceChart.fxml"/>
+            </VBox>
+        </Tab>
+        
+        <Tab text="Top Content" closable="false">
+            <TableView fx:id="topContentTable">
+                <columns>
+                    <TableColumn text="Content" fx:id="contentColumn"/>
+                    <TableColumn text="Impressions" fx:id="impressionsColumn"/>
+                    <TableColumn text="Engagement Rate" fx:id="engagementColumn"/>
+                    <TableColumn text="Posted Date" fx:id="dateColumn"/>
+                </columns>
+            </TableView>
+        </Tab>
+    </TabPane>
+</VBox>

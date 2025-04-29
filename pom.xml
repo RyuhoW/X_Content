@@ -90,6 +90,20 @@
             <artifactId>httpclient5</artifactId>
             <version>5.3.1</version>
         </dependency>
+
+        <!-- Charts -->
+        <dependency>
+            <groupId>org.jfree</groupId>
+            <artifactId>jfreechart-fx</artifactId>
+            <version>1.0.1</version>
+        </dependency>
+        
+        <!-- Excel Export -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.2.5</version>
+        </dependency>
     </dependencies>
 
     <build>
