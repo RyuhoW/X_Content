@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox spacing="10" xmlns:fx="http://javafx.com/fxml/1" 
+      fx:controller="com.xcontent.controller.ScheduleManagerController">
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20"/>
+    </padding>
+
+    <HBox spacing="10" alignment="CENTER_LEFT">
+        <Label text="Schedule Manager" styleClass="title-text"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button text="New Schedule" onAction="#handleNewSchedule"/>
+    </HBox>
+
+    <TabPane VBox.vgrow="ALWAYS">
+        <Tab text="Calendar View" closable="false">
+            <fx:include source="CalendarView.fxml"/>
+        </Tab>
+        <Tab text="List View" closable="false">
+            <TableView fx:id="scheduleTable">
+                <columns>
+                    <TableColumn text="Date/Time" fx:id="dateTimeColumn"/>
+                    <TableColumn text="Content" fx:id="contentColumn"/>
+                    <TableColumn text="Status" fx:id="statusColumn"/>
+                    <TableColumn text="Actions" fx:id="actionsColumn"/>
+                </columns>
+            </TableView>
+        </Tab>
+    </TabPane>
+
+    <HBox spacing="10" alignment="CENTER_RIGHT">
+        <Button text="Refresh" onAction="#handleRefresh"/>
+    </HBox>
+</VBox>
