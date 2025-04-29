@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.xcontent.controller.MainWindowController"
+      fx:id="mainContainer"
+      prefHeight="600.0" prefWidth="800.0"
+      styleClass="main-window">
+
+    <MenuBar>
+        <Menu text="File">
+            <MenuItem text="New Content" onAction="#handleNewContent"/>
+            <MenuItem text="Schedule" onAction="#handleSchedule"/>
+            <MenuItem text="Analytics" onAction="#handleAnalytics"/>
+            <SeparatorMenuItem/>
+            <MenuItem text="Exit"/>
+        </Menu>
+        <Menu text="Edit">
+            <MenuItem text="Settings"/>
+        </Menu>
+        <Menu text="Help">
+            <MenuItem text="About"/>
+        </Menu>
+    </MenuBar>
+
+    <SplitPane VBox.vgrow="ALWAYS">
+        <VBox spacing="10" styleClass="sidebar">
+            <padding>
+                <Insets top="10" right="10" bottom="10" left="10"/>
+            </padding>
+            <Button text="New Content" maxWidth="Infinity" onAction="#handleNewContent"/>
+            <Button text="Schedule" maxWidth="Infinity" onAction="#handleSchedule"/>
+            <Button text="Analytics" maxWidth="Infinity" onAction="#handleAnalytics"/>
+        </VBox>
+        <StackPane styleClass="content-area">
+            <Label text="Welcome to X.com Content Generator" styleClass="welcome-text"/>
+        </StackPane>
+    </SplitPane>
+
+    <HBox styleClass="status-bar">
+        <padding>
+            <Insets top="5" right="10" bottom="5" left="10"/>
+        </padding>
+        <Label fx:id="statusLabel" text="Starting..."/>
+    </HBox>
+</VBox> 

@@ -1,0 +1,36 @@
+.main-window {
+    -fx-background-color: #f5f5f5;
+}
+
+.sidebar {
+    -fx-background-color: #ffffff;
+    -fx-min-width: 200px;
+}
+
+.content-area {
+    -fx-background-color: #ffffff;
+    -fx-padding: 20px;
+}
+
+.welcome-text {
+    -fx-font-size: 24px;
+    -fx-text-fill: #666666;
+}
+
+.status-bar {
+    -fx-background-color: #eeeeee;
+}
+
+.button {
+    -fx-background-color: #1da1f2;
+    -fx-text-fill: white;
+    -fx-padding: 8px 16px;
+}
+
+.button:hover {
+    -fx-background-color: #1991db;
+}
+
+.menu-bar {
+    -fx-background-color: #ffffff;
+} 
