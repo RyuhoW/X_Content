@@ -1,0 +1,298 @@
+package com.xcontent.integration.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.sns.SnsClient;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+
+@Service
+public class CIService {
+    @Autowired
+    private GitLabApi gitLabApi;
+    @Autowired
+    private NotificationService notificationService;
+
+    public void triggerPipeline(String projectId, String branch) {
+        try {
+            Pipeline pipeline = gitLabApi.getPipelineApi()
+                .createPipeline(projectId, branch);
+            
+            monitorPipelineStatus(pipeline.getId());
+            
+        } catch (Exception e) {
+            notificationService.sendAlert(
+                "CI Pipeline Failed",
+                String.format("Failed to trigger pipeline for %s: %s",
+                    projectId, e.getMessage())
+            );
+            throw new RuntimeException("Pipeline trigger failed", e);
+        }
+    }
+
+    @Async
+    public CompletableFuture<PipelineStatus> monitorPipelineStatus(
+            String pipelineId) {
+        
+        while (true) {
+            Pipeline pipeline = gitLabApi.getPipelineApi()
+                .getPipeline(pipelineId);
+            
+            switch (pipeline.getStatus()) {
+                case SUCCESS:
+                    notifyPipelineSuccess(pipeline);
+                    return CompletableFuture.completedFuture(
+                        PipelineStatus.SUCCESS
+                    );
+                
+                case FAILED:
+                    notifyPipelineFailure(pipeline);
+                    return CompletableFuture.completedFuture(
+                        PipelineStatus.FAILED
+                    );
+                
+                case CANCELED:
+                    return CompletableFuture.completedFuture(
+                        PipelineStatus.CANCELED
+                    );
+                
+                default:
+                    Thread.sleep(30000); // 30Ã§Â§â€™Ã¥Â¾â€¦Ã¦Â©Å¸
+            }
+        }
+    }
+}
+
+@Service
+public class StorageService {
+    @Autowired
+    private S3Client s3Client;
+    @Autowired
+    private StorageConfig storageConfig;
+
+    public String uploadFile(
+            String bucketName,
+            String key,
+            byte[] content,
+            Map<String, String> metadata) {
+        
+        try {
+            PutObjectRequest request = PutObjectRequest.builder()
+                .bucket(bucketName)
+                .key(key)
+                .metadata(metadata)
+                .build();
+
+            s3Client.putObject(
+                request,
+                RequestBody.fromBytes(content)
+            );
+
+            return generateUrl(bucketName, key);
+            
+        } catch (Exception e) {
+            throw new StorageException(
+                "Failed to upload file: " + key,
+                e
+            );
+        }
+    }
+
+    public byte[] downloadFile(String bucketName, String key) {
+        try {
+            GetObjectRequest request = GetObjectRequest.builder()
+                .bucket(bucketName)
+                .key(key)
+                .build();
+
+            ResponseBytes<GetObjectResponse> response = 
+                s3Client.getObjectAsBytes(request);
+            
+            return response.asByteArray();
+            
+        } catch (Exception e) {
+            throw new StorageException(
+                "Failed to download file: " + key,
+                e
+            );
+        }
+    }
+
+    public void deleteFile(String bucketName, String key) {
+        try {
+            DeleteObjectRequest request = DeleteObjectRequest.builder()
+                .bucket(bucketName)
+                .key(key)
+                .build();
+
+            s3Client.deleteObject(request);
+            
+        } catch (Exception e) {
+            throw new StorageException(
+                "Failed to delete file: " + key,
+                e
+            );
+        }
+    }
+}
+
+@Service
+public class NotificationService {
+    @Autowired
+    private SnsClient snsClient;
+    @Autowired
+    private Slack slack;
+    @Autowired
+    private NotificationConfig config;
+
+    private Map<String, NotificationChannel> channels = new HashMap<>();
+
+    public void addChannel(NotificationChannel channel) {
+        channels.put(channel.getType(), channel);
+    }
+
+    public void sendNotification(
+            String channelType,
+            String title,
+            String message,
+            NotificationPriority priority) {
+        
+        NotificationChannel channel = channels.get(channelType);
+        if (channel == null) {
+            throw new IllegalArgumentException(
+                "Unknown channel type: " + channelType
+            );
+        }
+
+        NotificationMessage notification = NotificationMessage.builder()
+            .title(title)
+            .message(message)
+            .priority(priority)
+            .timestamp(System.currentTimeMillis())
+            .build();
+
+        channel.send(notification);
+    }
+
+    public void sendAlert(String title, String message) {
+        for (NotificationChannel channel : channels.values()) {
+            if (channel.supportsAlerts()) {
+                sendNotification(
+                    channel.getType(),
+                    title,
+                    message,
+                    NotificationPriority.HIGH
+                );
+            }
+        }
+    }
+
+    @Async
+    public CompletableFuture<Void> sendBulkNotifications(
+            List<NotificationMessage> messages) {
+        
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
+        
+        for (NotificationMessage message : messages) {
+            for (NotificationChannel channel : channels.values()) {
+                if (channel.supportsMessageType(message.getType())) {
+                    futures.add(
+                        CompletableFuture.runAsync(() -> 
+                            channel.send(message)
+                        )
+                    );
+                }
+            }
+        }
+
+        return CompletableFuture.allOf(
+            futures.toArray(new CompletableFuture[0])
+        );
+    }
+}
+
+@Service
+public class ThirdPartyIntegrationService {
+    @Autowired
+    private RestTemplate restTemplate;
+    @Autowired
+    private IntegrationConfig config;
+
+    public <T> T callExternalApi(
+            String apiName,
+            String endpoint,
+            HttpMethod method,
+            Object body,
+            Class<T> responseType) {
+        
+        ApiConfig apiConfig = config.getApiConfig(apiName);
+        if (apiConfig == null) {
+            throw new IllegalArgumentException(
+                "Unknown API: " + apiName
+            );
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Bearer " + apiConfig.getApiKey());
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<?> request = new HttpEntity<>(body, headers);
+
+        try {
+            ResponseEntity<T> response = restTemplate.exchange(
+                apiConfig.getBaseUrl() + endpoint,
+                method,
+                request,
+                responseType
+            );
+
+            return response.getBody();
+            
+        } catch (HttpClientErrorException e) {
+            throw new ApiException(
+                "API call failed: " + e.getStatusCode(),
+                e
+            );
+        }
+    }
+
+    @Async
+    public CompletableFuture<Map<String, Object>> processWebhook(
+            String source,
+            Map<String, Object> payload) {
+        
+        WebhookProcessor processor = getWebhookProcessor(source);
+        if (processor == null) {
+            throw new IllegalArgumentException(
+                "Unknown webhook source: " + source
+            );
+        }
+
+        try {
+            Map<String, Object> result = processor.process(payload);
+            return CompletableFuture.completedFuture(result);
+            
+        } catch (Exception e) {
+            return CompletableFuture.failedFuture(
+                new WebhookProcessingException(
+                    "Failed to process webhook from " + source,
+                    e
+                )
+            );
+        }
+    }
+
+    private WebhookProcessor getWebhookProcessor(String source) {
+        switch (source.toLowerCase()) {
+            case "github":
+                return new GitHubWebhookProcessor();
+            case "gitlab":
+                return new GitLabWebhookProcessor();
+            case "jenkins":
+                return new JenkinsWebhookProcessor();
+            default:
+                return null;
+        }
+    }
+}

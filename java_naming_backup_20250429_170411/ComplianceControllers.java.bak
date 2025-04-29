@@ -1,0 +1,124 @@
+package com.xcontent.compliance.controller;
+
+import com.xcontent.compliance.service.*;
+import com.xcontent.compliance.model.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import java.util.*;
+
+@RestController
+@RequestMapping("/api/gdpr")
+public class GDPRController {
+    @Autowired
+    private GDPRService gdprService;
+
+    @PostMapping("/consent")
+    public ResponseEntity<Void> recordConsent(
+            @RequestParam String userId,
+            @RequestParam String purpose,
+            @RequestBody Map<String, Object> consentData) {
+        
+        gdprService.recordConsent(userId, purpose, consentData);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/request")
+    public ResponseEntity<Void> submitRequest(
+            @RequestBody DataSubjectRequest request) {
+        
+        gdprService.handleDataSubjectRequest(request);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/breach")
+    public ResponseEntity<Void> reportBreach(
+            @RequestBody DataBreachReport report) {
+        
+        gdprService.reportDataBreach(report);
+        return ResponseEntity.ok().build();
+    }
+}
+
+@RestController
+@RequestMapping("/api/retention")
+public class RetentionController {
+    @Autowired
+    private RetentionPolicyService retentionService;
+
+    @PostMapping("/policy")
+    public ResponseEntity<Void> definePolicy(
+            @RequestBody RetentionPolicy policy) {
+        
+        retentionService.defineRetentionPolicy(policy);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/apply/{dataType}")
+    public ResponseEntity<Void> applyPolicy(
+            @PathVariable String dataType) {
+        
+        retentionService.applyRetentionPolicy(dataType);
+        return ResponseEntity.ok().build();
+    }
+}
+
+@RestController
+@RequestMapping("/api/audit")
+public class AuditController {
+    @Autowired
+    private AuditService auditService;
+
+    @PostMapping("/event")
+    public ResponseEntity<Void> logEvent(
+            @RequestBody AuditEvent event) {
+        
+        auditService.logAuditEvent(event);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<AuditEvent>> searchAuditTrail(
+            @RequestBody AuditSearchCriteria criteria) {
+        
+        return ResponseEntity.ok(
+            auditService.searchAuditTrail(criteria)
+        );
+    }
+
+    @GetMapping("/report")
+    public ResponseEntity<AuditReport> generateReport(
+            @RequestParam String reportType,
+            @RequestParam Date startDate,
+            @RequestParam Date endDate) {
+        
+        return ResponseEntity.ok(
+            auditService.generateAuditReport(
+                reportType,
+                startDate,
+                endDate
+            )
+        );
+    }
+}
+
+@RestController
+@RequestMapping("/api/security")
+public class SecurityComplianceController {
+    @Autowired
+    private SecurityComplianceService securityService;
+
+    @PostMapping("/assessment")
+    public ResponseEntity<Void> performAssessment() {
+        securityService.performSecurityAssessment();
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/incident")
+    public ResponseEntity<Void> reportIncident(
+            @RequestBody SecurityIncident incident) {
+        
+        securityService.handleSecurityIncident(incident);
+        return ResponseEntity.ok().build();
+    }
+}

@@ -1,0 +1,136 @@
+package com.xcontent.integration.controller;
+
+import com.xcontent.integration.service.*;
+import com.xcontent.integration.model.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import java.util.*;
+
+@RestController
+@RequestMapping("/api/ci")
+public class CIController {
+    @Autowired
+    private CIService ciService;
+
+    @PostMapping("/pipeline/trigger")
+    public ResponseEntity<PipelineStatus> triggerPipeline(
+            @RequestParam String projectId,
+            @RequestParam String branch) {
+        
+        return ResponseEntity.ok(
+            ciService.triggerPipeline(projectId, branch)
+        );
+    }
+
+    @GetMapping("/pipeline/{pipelineId}/status")
+    public ResponseEntity<PipelineStatus> getPipelineStatus(
+            @PathVariable String pipelineId) {
+        
+        return ResponseEntity.ok(
+            ciService.getPipelineStatus(pipelineId)
+        );
+    }
+}
+
+@RestController
+@RequestMapping("/api/storage")
+public class StorageController {
+    @Autowired
+    private StorageService storageService;
+
+    @PostMapping("/upload")
+    public ResponseEntity<String> uploadFile(
+            @RequestParam String bucketName,
+            @RequestParam String key,
+            @RequestBody byte[] content,
+            @RequestParam Map<String, String> metadata) {
+        
+        return ResponseEntity.ok(
+            storageService.uploadFile(
+                bucketName,
+                key,
+                content,
+                metadata
+            )
+        );
+    }
+
+    @GetMapping("/download/{bucketName}/{key}")
+    public ResponseEntity<byte[]> downloadFile(
+            @PathVariable String bucketName,
+            @PathVariable String key) {
+        
+        return ResponseEntity.ok(
+            storageService.downloadFile(bucketName, key)
+        );
+    }
+}
+
+@RestController
+@RequestMapping("/api/notifications")
+public class NotificationController {
+    @Autowired
+    private NotificationService notificationService;
+
+    @PostMapping("/send")
+    public ResponseEntity<Void> sendNotification(
+            @RequestParam String channelType,
+            @RequestParam String title,
+            @RequestParam String message,
+            @RequestParam NotificationPriority priority) {
+        
+        notificationService.sendNotification(
+            channelType,
+            title,
+            message,
+            priority
+        );
+        
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/bulk")
+    public ResponseEntity<Void> sendBulkNotifications(
+            @RequestBody List<NotificationMessage> messages) {
+        
+        notificationService.sendBulkNotifications(messages);
+        return ResponseEntity.ok().build();
+    }
+}
+
+@RestController
+@RequestMapping("/api/integrations")
+public class ThirdPartyIntegrationController {
+    @Autowired
+    private ThirdPartyIntegrationService integrationService;
+
+    @PostMapping("/{apiName}")
+    public ResponseEntity<Object> callExternalApi(
+            @PathVariable String apiName,
+            @RequestParam String endpoint,
+            @RequestParam HttpMethod method,
+            @RequestBody(required = false) Object body) {
+        
+        return ResponseEntity.ok(
+            integrationService.callExternalApi(
+                apiName,
+                endpoint,
+                method,
+                body,
+                Object.class
+            )
+        );
+    }
+
+    @PostMapping("/webhooks/{source}")
+    public ResponseEntity<Map<String, Object>> handleWebhook(
+            @PathVariable String source,
+            @RequestBody Map<String, Object> payload) {
+        
+        return ResponseEntity.ok(
+            integrationService.processWebhook(source, payload)
+                .join()
+        );
+    }
+}

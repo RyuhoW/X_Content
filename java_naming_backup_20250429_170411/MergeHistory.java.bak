@@ -1,0 +1,41 @@
+package com.xcontent.model;
+
+import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.util.*;
+
+@Data
+@Document(collection = "merge_history")
+public class MergeHistory {
+    @Id
+    private String id;
+    private String templateId;
+    private String sourceVersion;
+    private String targetVersion;
+    private String resultVersion;
+    private String mergedBy;
+    private Long mergedAt;
+    private MergeStatus status;
+    private Map<String, Object> resolutions;
+    private Map<String, Object> conflicts;
+    private List<String> affectedFields;
+    private String comment;
+}
+
+@Data
+public class MergeEvent {
+    private String id;
+    private String type;
+    private String description;
+    private Map<String, Object> details;
+    private Long timestamp;
+}
+
+public enum MergeStatus {
+    COMPLETED,
+    FAILED,
+    CONFLICT_RESOLVED,
+    ABANDONED
+}

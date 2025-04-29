@@ -1,0 +1,42 @@
+﻿groups:
+- name: cache_alerts
+  rules:
+  - alert: HighCacheMissRate
+    expr: |
+      rate(cache_misses_total{cache="userCache"}[5m]) /
+      (rate(cache_hits_total{cache="userCache"}[5m]) + rate(cache_misses_total{cache="userCache"}[5m])) > 0.3
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: High cache miss rate (instance {{ .instance }})
+      description: Cache miss rate is above 30% for 5 minutes
+
+  - alert: HighCacheLatency
+    expr: histogram_quantile(0.95, rate(cache_operation_duration_seconds_bucket{operation="get"}[5m])) > 0.1
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: High cache latency (instance {{ .instance }})
+      description: 95th percentile cache latency is above 100ms for 5 minutes
+
+  - alert: CacheEvictionSpike
+    expr: rate(cache_evictions_total[5m]) > 10
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: Cache eviction spike (instance {{ .instance }})
+      description: Cache eviction rate is above 10 per second for 5 minutes
+
+  - alert: LowCacheHitRate
+    expr: |
+      rate(cache_hits_total[5m]) /
+      (rate(cache_hits_total[5m]) + rate(cache_misses_total[5m])) < 0.7
+    for: 15m
+    labels:
+      severity: warning
+    annotations:
+      summary: Low cache hit rate (instance {{ .instance }})
+      description: Cache hit rate is below 70% for 15 minutes

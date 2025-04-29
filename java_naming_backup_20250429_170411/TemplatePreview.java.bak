@@ -1,0 +1,30 @@
+package com.xcontent.model;
+
+import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+import java.util.*;
+
+@Data
+@Document(collection = "template_previews")
+public class TemplatePreview {
+    @Id
+    private String id;
+    private String templateId;
+    private String version;
+    private String format;
+    private byte[] previewData;
+    private Map<String, Object> placeholderValues;
+    private Map<String, Object> renderSettings;
+    private Long generatedAt;
+    private String generatedBy;
+    private PreviewStatus status;
+    private List<String> warnings;
+    private List<String> errors;
+}
+
+public enum PreviewStatus {
+    GENERATING,
+    COMPLETED,
+    FAILED
+}

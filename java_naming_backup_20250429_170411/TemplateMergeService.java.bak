@@ -1,0 +1,398 @@
+package com.xcontent.service;
+
+import com.xcontent.model.*;
+import com.xcontent.repository.MergeRequestRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.*;
+import java.util.stream.Collectors;
+
+@Service
+public class TemplateMergeService {
+
+    @Autowired
+    private TemplateVersionService versionService;
+
+    @Autowired
+    private MergeRequestRepository mergeRequestRepository;
+
+    /**
+     * Ã£Æ’Å¾Ã£Æ’Â¼Ã£â€šÂ¸Ã¥ÂÂ¯Ã¨Æ’Â½Ã¦â‚¬Â§Ã£ÂÂ®Ã£Æ’ÂÃ£â€šÂ§Ã£Æ’Æ’Ã£â€šÂ¯
+     */
+    public MergeAnalysis analyzeMerge(
+            String templateId,
+            String sourceVersion,
+            String targetVersion) {
+        
+        TemplateVersion source = versionService.getVersion(templateId, sourceVersion);
+        TemplateVersion target = versionService.getVersion(templateId, targetVersion);
+
+        Map<String, Object> conflicts = findConflicts(source.getTemplate(), target.getTemplate());
+        boolean canAutoMerge = conflicts.isEmpty();
+
+        return new MergeAnalysis(
+            templateId,
+            sourceVersion,
+            targetVersion,
+            conflicts,
+            canAutoMerge
+        );
+    }
+
+    /**
+     * Ã£â€šÂ³Ã£Æ’Â³Ã£Æ’â€¢Ã£Æ’ÂªÃ£â€šÂ¯Ã£Æ’Ë†Ã£ÂÂ®Ã¦Â¤Å“Ã¥â€¡Âº
+     */
+    private Map<String, Object> findConflicts(
+            ExportTemplate source,
+            ExportTemplate target) {
+        
+        Map<String, Object> conflicts = new HashMap<>();
+
+        // Ã£Æ’â€¢Ã£â€šÂ£Ã£Æ’Â¼Ã£Æ’Â«Ã£Æ’â€°Ã£ÂÂ®Ã£â€šÂ³Ã£Æ’Â³Ã£Æ’â€¢Ã£Æ’ÂªÃ£â€šÂ¯Ã£Æ’Ë†Ã¦Â¤Å“Ã¥â€¡Âº
+        Map<String, Object> fieldConflicts = findFieldConflicts(
+            source.getFields(),
+            target.getFields()
+        );
+        if (!fieldConflicts.isEmpty()) {
+            conflicts.put("fields", fieldConflicts);
+        }
+
+        // Ã£Æ’Â¬Ã£â€šÂ¤Ã£â€šÂ¢Ã£â€šÂ¦Ã£Æ’Ë†Ã£ÂÂ®Ã£â€šÂ³Ã£Æ’Â³Ã£Æ’â€¢Ã£Æ’ÂªÃ£â€šÂ¯Ã£Æ’Ë†Ã¦Â¤Å“Ã¥â€¡Âº
+        Map<String, Object> layoutConflicts = findLayoutConflicts(
+            source.getLayout(),
+            target.getLayout()
+        );
+        if (!layoutConflicts.isEmpty()) {
+            conflicts.put("layout", layoutConflicts);
+        }
+
+        // Ã£â€šÂ¹Ã£â€šÂ¿Ã£â€šÂ¤Ã£Æ’Â«Ã£ÂÂ®Ã£â€šÂ³Ã£Æ’Â³Ã£Æ’â€¢Ã£Æ’ÂªÃ£â€šÂ¯Ã£Æ’Ë†Ã¦Â¤Å“Ã¥â€¡Âº
+        Map<String, Object> styleConflicts = findStyleConflicts(
+            source.getStyles(),
+            target.getStyles()
+        );
+        if (!styleConflicts.isEmpty()) {
+            conflicts.put("styles", styleConflicts);
+        }
+
+        return conflicts;
+    }
+
+    /**
+     * Ã£Æ’â€¢Ã£â€šÂ£Ã£Æ’Â¼Ã£Æ’Â«Ã£Æ’â€°Ã£ÂÂ®Ã£â€šÂ³Ã£Æ’Â³Ã£Æ’â€¢Ã£Æ’ÂªÃ£â€šÂ¯Ã£Æ’Ë†Ã¦Â¤Å“Ã¥â€¡Âº
+     */
+    private Map<String, Object> findFieldConflicts(
+            List<TemplateField> sourceFields,
+            List<TemplateField> targetFields) {
+        
+        Map<String, Object> conflicts = new HashMap<>();
+        Map<String, TemplateField> sourceMap = new HashMap<>();
+        Map<String, TemplateField> targetMap = new HashMap<>();
+
+        sourceFields.forEach(field -> sourceMap.put(field.getName(), field));
+        targetFields.forEach(field -> targetMap.put(field.getName(), field));
+
+        // Ã¥ÂÅ’Ã¥ÂÂÃ£Æ’â€¢Ã£â€šÂ£Ã£Æ’Â¼Ã£Æ’Â«Ã£Æ’â€°Ã£ÂÂ®Ã§â€¢Â°Ã£ÂÂªÃ£â€šâ€¹Ã¥Â®Å¡Ã§Â¾Â©Ã£â€šâ€™Ã¦Â¤Å“Ã¥â€¡Âº
+        sourceMap.forEach((name, sourceField) -> {
+            TemplateField targetField = targetMap.get(name);
+            if (targetField != null && !fieldsAreCompatible(sourceField, targetField)) {
+                conflicts.put(name, Map.of(
+                    "source", sourceField,
+                    "target", targetField
+                ));
+            }
+        });
+
+        return conflicts;
+    }
+
+    /**
+     * Ã£Æ’â€¢Ã£â€šÂ£Ã£Æ’Â¼Ã£Æ’Â«Ã£Æ’â€°Ã£ÂÂ®Ã¤Âºâ€™Ã¦Ââ€ºÃ¦â‚¬Â§Ã£Æ’ÂÃ£â€šÂ§Ã£Æ’Æ’Ã£â€šÂ¯
+     */
+    private boolean fieldsAreCompatible(TemplateField field1, TemplateField field2) {
+        // Ã¥Å¾â€¹Ã£ÂÂ®Ã¤Âºâ€™Ã¦Ââ€ºÃ¦â‚¬Â§Ã£Æ’ÂÃ£â€šÂ§Ã£Æ’Æ’Ã£â€šÂ¯
+        if (!field1.getType().equals(field2.getType())) {
+            return false;
+        }
+
+        // Ã¥Â¤â€°Ã¦Ââ€ºÃ¥â€¡Â¦Ã§Ââ€ Ã£ÂÂ®Ã¤Âºâ€™Ã¦Ââ€ºÃ¦â‚¬Â§Ã£Æ’ÂÃ£â€šÂ§Ã£Æ’Æ’Ã£â€šÂ¯
+        if (!Objects.equals(field1.getTransformation(), field2.getTransformation())) {
+            return false;
+        }
+
+        // Ã£â€šÂªÃ£Æ’â€”Ã£â€šÂ·Ã£Æ’Â§Ã£Æ’Â³Ã£ÂÂ®Ã¤Âºâ€™Ã¦Ââ€ºÃ¦â‚¬Â§Ã£Æ’ÂÃ£â€šÂ§Ã£Æ’Æ’Ã£â€šÂ¯
+        return Objects.equals(field1.getOptions(), field2.getOptions());
+    }
+
+    /**
+     * Ã£Æ’Â¬Ã£â€šÂ¤Ã£â€šÂ¢Ã£â€šÂ¦Ã£Æ’Ë†Ã£ÂÂ®Ã£â€šÂ³Ã£Æ’Â³Ã£Æ’â€¢Ã£Æ’ÂªÃ£â€šÂ¯Ã£Æ’Ë†Ã¦Â¤Å“Ã¥â€¡Âº
+     */
+    private Map<String, Object> findLayoutConflicts(
+            Map<String, List<String>> sourceLayout,
+            Map<String, List<String>> targetLayout) {
+        
+        Map<String, Object> conflicts = new HashMap<>();
+
+        // Ã¥â€¦Â±Ã©â‚¬Å¡Ã£ÂÂ®Ã£â€šÂ»Ã£â€šÂ¯Ã£â€šÂ·Ã£Æ’Â§Ã£Æ’Â³Ã£ÂÂ§Ã§â€¢Â°Ã£ÂÂªÃ£â€šâ€¹Ã©â€¦ÂÃ§Â½Â®Ã£â€šâ€™Ã¦Â¤Å“Ã¥â€¡Âº
+        Set<String> commonSections = new HashSet<>(sourceLayout.keySet());
+        commonSections.retainAll(targetLayout.keySet());
+
+        for (String section : commonSections) {
+            List<String> sourceFields = sourceLayout.get(section);
+            List<String> targetFields = targetLayout.get(section);
+
+            if (!Objects.equals(sourceFields, targetFields)) {
+                conflicts.put(section, Map.of(
+                    "source", sourceFields,
+                    "target", targetFields
+                ));
+            }
+        }
+
+        return conflicts;
+    }
+
+    /**
+     * Ã£â€šÂ¹Ã£â€šÂ¿Ã£â€šÂ¤Ã£Æ’Â«Ã£ÂÂ®Ã£â€šÂ³Ã£Æ’Â³Ã£Æ’â€¢Ã£Æ’ÂªÃ£â€šÂ¯Ã£Æ’Ë†Ã¦Â¤Å“Ã¥â€¡Âº
+     */
+    private Map<String, Object> findStyleConflicts(
+            Map<String, String> sourceStyles,
+            Map<String, String> targetStyles) {
+        
+        Map<String, Object> conflicts = new HashMap<>();
+
+        // Ã¥ÂÅ’Ã£ÂËœÃ£â€šÂ¹Ã£â€šÂ¿Ã£â€šÂ¤Ã£Æ’Â«Ã£Æ’â€”Ã£Æ’Â­Ã£Æ’â€˜Ã£Æ’â€ Ã£â€šÂ£Ã£ÂÂ§Ã§â€¢Â°Ã£ÂÂªÃ£â€šâ€¹Ã¥â‚¬Â¤Ã£â€šâ€™Ã¦Â¤Å“Ã¥â€¡Âº
+        Set<String> commonProperties = new HashSet<>(sourceStyles.keySet());
+        commonProperties.retainAll(targetStyles.keySet());
+
+        for (String property : commonProperties) {
+            String sourceValue = sourceStyles.get(property);
+            String targetValue = targetStyles.get(property);
+
+            if (!Objects.equals(sourceValue, targetValue)) {
+                conflicts.put(property, Map.of(
+                    "source", sourceValue,
+                    "target", targetValue
+                ));
+            }
+        }
+
+        return conflicts;
+    }
+
+    /**
+     * Ã£Æ’Å¾Ã£Æ’Â¼Ã£â€šÂ¸Ã£ÂÂ®Ã¥Â®Å¸Ã¨Â¡Å’
+     */
+    public ExportTemplate merge(
+            String templateId,
+            String sourceVersion,
+            String targetVersion,
+            Map<String, String> conflictResolutions) {
+        
+        TemplateVersion source = versionService.getVersion(templateId, sourceVersion);
+        TemplateVersion target = versionService.getVersion(templateId, targetVersion);
+
+        ExportTemplate mergedTemplate = new ExportTemplate();
+        mergedTemplate.setName(target.getTemplate().getName());
+        mergedTemplate.setDescription(target.getTemplate().getDescription());
+        mergedTemplate.setFormat(target.getTemplate().getFormat());
+
+        // Ã£Æ’â€¢Ã£â€šÂ£Ã£Æ’Â¼Ã£Æ’Â«Ã£Æ’â€°Ã£ÂÂ®Ã£Æ’Å¾Ã£Æ’Â¼Ã£â€šÂ¸
+        mergedTemplate.setFields(
+            mergeFields(
+                source.getTemplate().getFields(),
+                target.getTemplate().getFields(),
+                conflictResolutions.get("fields")
+            )
+        );
+
+        // Ã£Æ’Â¬Ã£â€šÂ¤Ã£â€šÂ¢Ã£â€šÂ¦Ã£Æ’Ë†Ã£ÂÂ®Ã£Æ’Å¾Ã£Æ’Â¼Ã£â€šÂ¸
+        mergedTemplate.setLayout(
+            mergeLayouts(
+                source.getTemplate().getLayout(),
+                target.getTemplate().getLayout(),
+                conflictResolutions.get("layout")
+            )
+        );
+
+        // Ã£â€šÂ¹Ã£â€šÂ¿Ã£â€šÂ¤Ã£Æ’Â«Ã£ÂÂ®Ã£Æ’Å¾Ã£Æ’Â¼Ã£â€šÂ¸
+        mergedTemplate.setStyles(
+            mergeStyles(
+                source.getTemplate().getStyles(),
+                target.getTemplate().getStyles(),
+                conflictResolutions.get("styles")
+            )
+        );
+
+        // Ã¦â€“Â°Ã£Ââ€”Ã£Ââ€žÃ£Æ’ÂÃ£Æ’Â¼Ã£â€šÂ¸Ã£Æ’Â§Ã£Æ’Â³Ã£ÂÂ¨Ã£Ââ€”Ã£ÂÂ¦Ã¤Â¿ÂÃ¥Â­Ëœ
+        return versionService.createVersion(
+            templateId,
+            mergedTemplate,
+            String.format("Merged version %s into %s", sourceVersion, targetVersion)
+        ).getTemplate();
+    }
+
+    /**
+     * Ã£Æ’â€¢Ã£â€šÂ£Ã£Æ’Â¼Ã£Æ’Â«Ã£Æ’â€°Ã£ÂÂ®Ã£Æ’Å¾Ã£Æ’Â¼Ã£â€šÂ¸
+     */
+    private List<TemplateField> mergeFields(
+            List<TemplateField> sourceFields,
+            List<TemplateField> targetFields,
+            String resolution) {
+        
+        Map<String, TemplateField> mergedFields = new HashMap<>();
+
+        // Ã£â€šÂ¿Ã£Æ’Â¼Ã£â€šÂ²Ã£Æ’Æ’Ã£Æ’Ë†Ã£ÂÂ®Ã£Æ’â€¢Ã£â€šÂ£Ã£Æ’Â¼Ã£Æ’Â«Ã£Æ’â€°Ã£â€šâ€™Ã£Æ’â„¢Ã£Æ’Â¼Ã£â€šÂ¹Ã£ÂÂ«Ã£Ââ„¢Ã£â€šâ€¹
+        targetFields.forEach(field -> 
+            mergedFields.put(field.getName(), field));
+
+        // Ã£â€šÂ½Ã£Æ’Â¼Ã£â€šÂ¹Ã£ÂÂ®Ã¦â€“Â°Ã£Ââ€”Ã£Ââ€žÃ£Æ’â€¢Ã£â€šÂ£Ã£Æ’Â¼Ã£Æ’Â«Ã£Æ’â€°Ã£â€šâ€™Ã¨Â¿Â½Ã¥Å Â 
+        sourceFields.forEach(field -> {
+            if (!mergedFields.containsKey(field.getName())) {
+                mergedFields.put(field.getName(), field);
+            }
+        });
+
+        // Ã£â€šÂ³Ã£Æ’Â³Ã£Æ’â€¢Ã£Æ’ÂªÃ£â€šÂ¯Ã£Æ’Ë†Ã¨Â§Â£Ã¦Â±ÂºÃ£ÂÂ®Ã©ÂÂ©Ã§â€Â¨
+        if (resolution != null) {
+            applyFieldResolutions(mergedFields, resolution);
+        }
+
+        return new ArrayList<>(mergedFields.values());
+    }
+
+    /**
+     * Ã£Æ’Â¬Ã£â€šÂ¤Ã£â€šÂ¢Ã£â€šÂ¦Ã£Æ’Ë†Ã£ÂÂ®Ã£Æ’Å¾Ã£Æ’Â¼Ã£â€šÂ¸
+     */
+    private Map<String, List<String>> mergeLayouts(
+            Map<String, List<String>> sourceLayout,
+            Map<String, List<String>> targetLayout,
+            String resolution) {
+        
+        Map<String, List<String>> mergedLayout = new HashMap<>(targetLayout);
+
+        // Ã£â€šÂ½Ã£Æ’Â¼Ã£â€šÂ¹Ã£ÂÂ®Ã¦â€“Â°Ã£Ââ€”Ã£Ââ€žÃ£â€šÂ»Ã£â€šÂ¯Ã£â€šÂ·Ã£Æ’Â§Ã£Æ’Â³Ã£â€šâ€™Ã¨Â¿Â½Ã¥Å Â 
+        sourceLayout.forEach((section, fields) -> {
+            if (!mergedLayout.containsKey(section)) {
+                mergedLayout.put(section, fields);
+            }
+        });
+
+        // Ã£â€šÂ³Ã£Æ’Â³Ã£Æ’â€¢Ã£Æ’ÂªÃ£â€šÂ¯Ã£Æ’Ë†Ã¨Â§Â£Ã¦Â±ÂºÃ£ÂÂ®Ã©ÂÂ©Ã§â€Â¨
+        if (resolution != null) {
+            applyLayoutResolutions(mergedLayout, resolution);
+        }
+
+        return mergedLayout;
+    }
+
+    /**
+     * Ã£â€šÂ¹Ã£â€šÂ¿Ã£â€šÂ¤Ã£Æ’Â«Ã£ÂÂ®Ã£Æ’Å¾Ã£Æ’Â¼Ã£â€šÂ¸
+     */
+    private Map<String, String> mergeStyles(
+            Map<String, String> sourceStyles,
+            Map<String, String> targetStyles,
+            String resolution) {
+        
+        Map<String, String> mergedStyles = new HashMap<>(targetStyles);
+
+        // Ã£â€šÂ½Ã£Æ’Â¼Ã£â€šÂ¹Ã£ÂÂ®Ã¦â€“Â°Ã£Ââ€”Ã£Ââ€žÃ£â€šÂ¹Ã£â€šÂ¿Ã£â€šÂ¤Ã£Æ’Â«Ã£â€šâ€™Ã¨Â¿Â½Ã¥Å Â 
+        sourceStyles.forEach((property, value) -> {
+            if (!mergedStyles.containsKey(property)) {
+                mergedStyles.put(property, value);
+            }
+        });
+
+        // Ã£â€šÂ³Ã£Æ’Â³Ã£Æ’â€¢Ã£Æ’ÂªÃ£â€šÂ¯Ã£Æ’Ë†Ã¨Â§Â£Ã¦Â±ÂºÃ£ÂÂ®Ã©ÂÂ©Ã§â€Â¨
+        if (resolution != null) {
+            applyStyleResolutions(mergedStyles, resolution);
+        }
+
+        return mergedStyles;
+    }
+
+    /**
+     * Ã£Æ’â€¢Ã£â€šÂ£Ã£Æ’Â¼Ã£Æ’Â«Ã£Æ’â€°Ã¨Â§Â£Ã¦Â±ÂºÃ£ÂÂ®Ã©ÂÂ©Ã§â€Â¨
+     */
+    private void applyFieldResolutions(
+            Map<String, TemplateField> fields,
+            String resolution) {
+        
+        try {
+            Map<String, Object> resolutions = parseResolution(resolution);
+            resolutions.forEach((fieldName, value) -> {
+                if (value instanceof Map) {
+                    Map<String, Object> fieldData = (Map<String, Object>) value;
+                    TemplateField field = new TemplateField();
+                    field.setName(fieldName);
+                    field.setType((String) fieldData.get("type"));
+                    field.setPath((String) fieldData.get("path"));
+                    field.setTransformation((String) fieldData.get("transformation"));
+                    field.setOptions((Map<String, Object>) fieldData.get("options"));
+                    fields.put(fieldName, field);
+                }
+            });
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid field resolution format", e);
+        }
+    }
+
+    /**
+     * Ã£Æ’Â¬Ã£â€šÂ¤Ã£â€šÂ¢Ã£â€šÂ¦Ã£Æ’Ë†Ã¨Â§Â£Ã¦Â±ÂºÃ£ÂÂ®Ã©ÂÂ©Ã§â€Â¨
+     */
+    private void applyLayoutResolutions(
+            Map<String, List<String>> layout,
+            String resolution) {
+        
+        try {
+            Map<String, Object> resolutions = parseResolution(resolution);
+            resolutions.forEach((section, value) -> {
+                if (value instanceof List) {
+                    layout.put(section, (List<String>) value);
+                }
+            });
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid layout resolution format", e);
+        }
+    }
+
+    /**
+     * Ã£â€šÂ¹Ã£â€šÂ¿Ã£â€šÂ¤Ã£Æ’Â«Ã¨Â§Â£Ã¦Â±ÂºÃ£ÂÂ®Ã©ÂÂ©Ã§â€Â¨
+     */
+    private void applyStyleResolutions(
+            Map<String, String> styles,
+            String resolution) {
+        
+        try {
+            Map<String, Object> resolutions = parseResolution(resolution);
+            resolutions.forEach((property, value) -> {
+                if (value instanceof String) {
+                    styles.put(property, (String) value);
+                }
+            });
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid style resolution format", e);
+        }
+    }
+
+    /**
+     * Ã¨Â§Â£Ã¦Â±ÂºÃ¦â€“â€¡Ã¥Â­â€”Ã¥Ë†â€”Ã£ÂÂ®Ã£Æ’â€˜Ã£Æ’Â¼Ã£â€šÂ¹
+     */
+    private Map<String, Object> parseResolution(String resolution) {
+        try {
+            return new ObjectMapper().readValue(resolution, Map.class);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid resolution format", e);
+        }
+    }
+}
+
+@Data
+public class MergeAnalysis {
+    private String templateId;
+    private String sourceVersion;
+    private String targetVersion;
+    private Map<String, Object> conflicts;
+    private boolean canAutoMerge;
+}

@@ -1,0 +1,59 @@
+package com.xcontent.model;
+
+import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.util.*;
+
+@Data
+@Document(collection = "export_history")
+public class ExportHistory {
+    @Id
+    private String id;
+    private String templateId;
+    private String batchId;
+    private String exportName;
+    private ExportType exportType;
+    private ExportStatus status;
+    private String exportedBy;
+    private Long startedAt;
+    private Long completedAt;
+    private Map<String, Object> parameters;
+    private List<ExportResult> results;
+    private List<ExportError> errors;
+    private Map<String, Object> metadata;
+}
+
+@Data
+public class ExportResult {
+    private String fileName;
+    private String filePath;
+    private String format;
+    private Long fileSize;
+    private String checksum;
+    private Map<String, Object> stats;
+}
+
+@Data
+public class ExportError {
+    private String code;
+    private String message;
+    private String details;
+    private Long timestamp;
+    private Map<String, Object> context;
+}
+
+public enum ExportType {
+    SINGLE,
+    BATCH,
+    SCHEDULED
+}
+
+public enum ExportStatus {
+    PENDING,
+    PROCESSING,
+    COMPLETED,
+    FAILED,
+    CANCELLED
+}

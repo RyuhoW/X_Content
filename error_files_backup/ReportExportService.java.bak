@@ -1,0 +1,261 @@
+package com.xcontent.service;
+
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.layout.Document;
+import com.itextpdf.layout.element.Paragraph;
+import com.itextpdf.layout.element.Table;
+import com.itextpdf.layout.properties.TextAlignment;
+import com.xcontent.model.ReportTemplate;
+import com.xcontent.model.dto.ExportRequest;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.io.ByteArrayOutputStream;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Map;
+
+@Slf4j
+@Service
+public class ReportExportService {
+    
+    @Autowired
+    private CustomReportService reportService;
+
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+    /**
+     * PDFÃ£Æ’â€¢Ã£â€šÂ©Ã£Æ’Â¼Ã£Æ’Å¾Ã£Æ’Æ’Ã£Æ’Ë†Ã£ÂÂ§Ã£Æ’Â¬Ã£Æ’ÂÃ£Æ’Â¼Ã£Æ’Ë†Ã£â€šâ€™Ã£â€šÂ¨Ã£â€šÂ¯Ã£â€šÂ¹Ã£Æ’ÂÃ£Æ’Â¼Ã£Æ’Ë†
+     */
+    public byte[] exportToPdf(ReportTemplate template, LocalDateTime startTime, LocalDateTime endTime) {
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            PdfWriter writer = new PdfWriter(baos);
+            PdfDocument pdf = new PdfDocument(writer);
+            Document document = new Document(pdf);
+
+            // Ã£Æ’ËœÃ£Æ’Æ’Ã£Æ’â‚¬Ã£Æ’Â¼
+            document.add(new Paragraph(template.getName())
+                .setFontSize(24)
+                .setTextAlignment(TextAlignment.CENTER));
+
+            document.add(new Paragraph(template.getDescription())
+                .setFontSize(12)
+                .setTextAlignment(TextAlignment.CENTER));
+
+            // Ã¦Å“Å¸Ã©â€“â€œÃ¦Æ’â€¦Ã¥Â Â±
+            document.add(new Paragraph(String.format("Period: %s to %s",
+                startTime.format(DATE_FORMAT),
+                endTime.format(DATE_FORMAT)))
+                .setFontSize(10));
+
+            // Ã£Æ’Â¬Ã£Æ’ÂÃ£Æ’Â¼Ã£Æ’Ë†Ã£Æ’â€¡Ã£Æ’Â¼Ã£â€šÂ¿Ã£ÂÂ®Ã¥Ââ€“Ã¥Â¾â€”Ã£ÂÂ¨Ã¥Â¤â€°Ã¦Ââ€º
+            Map<String, Object> reportData = reportService.generateReportData(template, startTime, endTime);
+            
+            // Ã£â€šÂ»Ã£â€šÂ¯Ã£â€šÂ·Ã£Æ’Â§Ã£Æ’Â³Ã¥Ë†Â¥Ã£ÂÂ®Ã£Æ’â€¡Ã£Æ’Â¼Ã£â€šÂ¿Ã¥â€¡ÂºÃ¥Å â€º
+            for (String section : template.getEnabledSections()) {
+                document.add(new Paragraph(section)
+                    .setFontSize(16)
+                    .setBold()
+                    .setMarginTop(20));
+
+                if (reportData.containsKey(section)) {
+                    addSectionToPdf(document, section, reportData.get(section));
+                }
+            }
+
+            // Ã£Æ’â€¢Ã£Æ’Æ’Ã£â€šÂ¿Ã£Æ’Â¼
+            document.add(new Paragraph(String.format("Generated at: %s",
+                LocalDateTime.now().format(DATE_FORMAT)))
+                .setFontSize(8)
+                .setTextAlignment(TextAlignment.RIGHT));
+
+            document.close();
+            return baos.toByteArray();
+        } catch (Exception e) {
+            log.error("Failed to generate PDF report", e);
+            throw new RuntimeException("PDF generation failed", e);
+        }
+    }
+
+    /**
+     * ExcelÃ£Æ’â€¢Ã£â€šÂ©Ã£Æ’Â¼Ã£Æ’Å¾Ã£Æ’Æ’Ã£Æ’Ë†Ã£ÂÂ§Ã£Æ’Â¬Ã£Æ’ÂÃ£Æ’Â¼Ã£Æ’Ë†Ã£â€šâ€™Ã£â€šÂ¨Ã£â€šÂ¯Ã£â€šÂ¹Ã£Æ’ÂÃ£Æ’Â¼Ã£Æ’Ë†
+     */
+    public byte[] exportToExcel(ReportTemplate template, LocalDateTime startTime, LocalDateTime endTime) {
+        try (Workbook workbook = new XSSFWorkbook();
+             ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            
+            // Ã£â€šÂµÃ£Æ’Å¾Ã£Æ’ÂªÃ£Æ’Â¼Ã£â€šÂ·Ã£Æ’Â¼Ã£Æ’Ë†
+            Sheet summarySheet = workbook.createSheet("Summary");
+            int rowNum = 0;
+
+            // Ã£Æ’ËœÃ£Æ’Æ’Ã£Æ’â‚¬Ã£Æ’Â¼
+            Row headerRow = summarySheet.createRow(rowNum++);
+            headerRow.createCell(0).setCellValue(template.getName());
+            
+            // Ã¦Å“Å¸Ã©â€“â€œÃ¦Æ’â€¦Ã¥Â Â±
+            Row periodRow = summarySheet.createRow(rowNum++);
+            periodRow.createCell(0).setCellValue(String.format("Period: %s to %s",
+                startTime.format(DATE_FORMAT),
+                endTime.format(DATE_FORMAT)));
+
+            // Ã£Æ’Â¬Ã£Æ’ÂÃ£Æ’Â¼Ã£Æ’Ë†Ã£Æ’â€¡Ã£Æ’Â¼Ã£â€šÂ¿Ã£ÂÂ®Ã¥Ââ€“Ã¥Â¾â€”
+            Map<String, Object> reportData = reportService.generateReportData(template, startTime, endTime);
+
+            // Ã£â€šÂ»Ã£â€šÂ¯Ã£â€šÂ·Ã£Æ’Â§Ã£Æ’Â³Ã¥Ë†Â¥Ã£â€šÂ·Ã£Æ’Â¼Ã£Æ’Ë†Ã£ÂÂ®Ã¤Â½Å“Ã¦Ë†Â
+            for (String section : template.getEnabledSections()) {
+                if (reportData.containsKey(section)) {
+                    Sheet sectionSheet = workbook.createSheet(section);
+                    addSectionToExcel(sectionSheet, reportData.get(section));
+                }
+            }
+
+            // Ã£â€šÂ¹Ã£â€šÂ¿Ã£â€šÂ¤Ã£Æ’Â«Ã£ÂÂ®Ã©ÂÂ©Ã§â€Â¨
+            applyExcelStyles(workbook);
+
+            // Ã¥Ë†â€”Ã¥Â¹â€¦Ã£ÂÂ®Ã¨â€¡ÂªÃ¥â€¹â€¢Ã¨ÂªÂ¿Ã¦â€¢Â´
+            for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
+                Sheet sheet = workbook.getSheetAt(i);
+                for (int j = 0; j < 10; j++) { // Ã¦Å“â‚¬Ã¥Ë†ÂÃ£ÂÂ®10Ã¥Ë†â€”Ã£ÂÂ¾Ã£ÂÂ§
+                    sheet.autoSizeColumn(j);
+                }
+            }
+
+            workbook.write(baos);
+            return baos.toByteArray();
+        } catch (Exception e) {
+            log.error("Failed to generate Excel report", e);
+            throw new RuntimeException("Excel generation failed", e);
+        }
+    }
+
+    private void addSectionToPdf(Document document, String sectionName, Object sectionData) {
+        if (sectionData instanceof Map) {
+            Map<?, ?> dataMap = (Map<?, ?>) sectionData;
+            Table table = new Table(2);
+            
+            dataMap.forEach((key, value) -> {
+                table.addCell(key.toString());
+                table.addCell(value.toString());
+            });
+            
+            document.add(table);
+        } else if (sectionData instanceof List) {
+            List<?> dataList = (List<?>) sectionData;
+            for (Object item : dataList) {
+                document.add(new Paragraph(item.toString()));
+            }
+        } else {
+            document.add(new Paragraph(sectionData.toString()));
+        }
+    }
+
+    private void addSectionToExcel(Sheet sheet, Object sectionData) {
+        int rowNum = 0;
+        
+        if (sectionData instanceof Map) {
+            Map<?, ?> dataMap = (Map<?, ?>) sectionData;
+            for (Map.Entry<?, ?> entry : dataMap.entrySet()) {
+                Row row = sheet.createRow(rowNum++);
+                row.createCell(0).setCellValue(entry.getKey().toString());
+                row.createCell(1).setCellValue(entry.getValue().toString());
+            }
+        } else if (sectionData instanceof List) {
+            List<?> dataList = (List<?>) sectionData;
+            for (Object item : dataList) {
+                Row row = sheet.createRow(rowNum++);
+                row.createCell(0).setCellValue(item.toString());
+            }
+        }
+    }
+
+    private void applyExcelStyles(Workbook workbook) {
+        // Ã£Æ’ËœÃ£Æ’Æ’Ã£Æ’â‚¬Ã£Æ’Â¼Ã£â€šÂ¹Ã£â€šÂ¿Ã£â€šÂ¤Ã£Æ’Â«
+        CellStyle headerStyle = workbook.createCellStyle();
+        Font headerFont = workbook.createFont();
+        headerFont.setBold(true);
+        headerFont.setFontHeightInPoints((short) 14);
+        headerStyle.setFont(headerFont);
+        headerStyle.setAlignment(HorizontalAlignment.CENTER);
+
+        // Ã£Æ’â€¡Ã£Æ’Â¼Ã£â€šÂ¿Ã£â€šÂ¹Ã£â€šÂ¿Ã£â€šÂ¤Ã£Æ’Â«
+        CellStyle dataStyle = workbook.createCellStyle();
+        dataStyle.setAlignment(HorizontalAlignment.LEFT);
+        
+        // Ã¦â€¢Â°Ã¥â‚¬Â¤Ã£â€šÂ¹Ã£â€šÂ¿Ã£â€šÂ¤Ã£Æ’Â«
+        CellStyle numberStyle = workbook.createCellStyle();
+        numberStyle.setDataFormat(workbook.createDataFormat().getFormat("#,##0.00"));
+
+        // Ã£â€šÂ¹Ã£â€šÂ¿Ã£â€šÂ¤Ã£Æ’Â«Ã£ÂÂ®Ã©ÂÂ©Ã§â€Â¨
+        for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
+            Sheet sheet = workbook.getSheetAt(i);
+            Row headerRow = sheet.getRow(0);
+            if (headerRow != null) {
+                for (Cell cell : headerRow) {
+                    cell.setCellStyle(headerStyle);
+                }
+            }
+        }
+    }
+}
+    @Autowired
+    private ChartService chartService;
+
+    private void addChartsToPdf(Document document, Map<String, Object> reportData) {
+        // Ã£Æ’â€˜Ã£Æ’â€¢Ã£â€šÂ©Ã£Æ’Â¼Ã£Æ’Å¾Ã£Æ’Â³Ã£â€šÂ¹Ã£Æ’ÂÃ£Æ’Â£Ã£Æ’Â¼Ã£Æ’Ë†Ã£ÂÂ®Ã¨Â¿Â½Ã¥Å Â 
+        if (reportData.containsKey("performance_metrics")) {
+            @SuppressWarnings("unchecked")
+            Map<LocalDateTime, Map<String, Double>> metrics = 
+                (Map<LocalDateTime, Map<String, Double>>) reportData.get("performance_metrics");
+            
+            byte[] chartImage = chartService.createPerformanceChart(metrics);
+            Image image = ImageDataFactory.create(chartImage);
+            document.add(image);
+        }
+
+        // Ã£â€šÂ¨Ã£Æ’Â©Ã£Æ’Â¼Ã¥Ë†â€ Ã¥Â¸Æ’Ã£Æ’ÂÃ£Æ’Â£Ã£Æ’Â¼Ã£Æ’Ë†Ã£ÂÂ®Ã¨Â¿Â½Ã¥Å Â 
+        if (reportData.containsKey("error_distribution")) {
+            @SuppressWarnings("unchecked")
+            Map<String, Integer> errorCounts = 
+                (Map<String, Integer>) reportData.get("error_distribution");
+            
+            byte[] chartImage = chartService.createErrorDistributionChart(errorCounts);
+            Image image = ImageDataFactory.create(chartImage);
+            document.add(image);
+        }
+    }
+
+    private void addChartsToExcel(XSSFWorkbook workbook, Map<String, Object> reportData) {
+        // Ã£Æ’â€˜Ã£Æ’â€¢Ã£â€šÂ©Ã£Æ’Â¼Ã£Æ’Å¾Ã£Æ’Â³Ã£â€šÂ¹Ã£Æ’â€¡Ã£Æ’Â¼Ã£â€šÂ¿Ã£ÂÂ®Ã£â€šÂ·Ã£Æ’Â¼Ã£Æ’Ë†
+        if (reportData.containsKey("performance_metrics")) {
+            @SuppressWarnings("unchecked")
+            Map<LocalDateTime, Map<String, Double>> metrics = 
+                (Map<LocalDateTime, Map<String, Double>>) reportData.get("performance_metrics");
+            
+            XSSFSheet sheet = workbook.createSheet("Performance Charts");
+            
+            // Ã¦â„¢â€šÃ§Â³Â»Ã¥Ë†â€”Ã£Æ’â€¡Ã£Æ’Â¼Ã£â€šÂ¿Ã£ÂÂ®Ã¥Â¤â€°Ã¦Ââ€º
+            Map<String, Number> aggregatedData = new HashMap<>();
+            metrics.values().forEach(m -> m.forEach((k, v) -> 
+                aggregatedData.merge(k, v, (old, new_) -> 
+                    ((Double) old + (Double) new_) / 2)));
+            
+            chartService.createExcelChart(workbook, sheet, 
+                "Performance Metrics", aggregatedData, 0, 0);
+        }
+
+        // Ã£â€šÂ¨Ã£Æ’Â©Ã£Æ’Â¼Ã¥Ë†â€ Ã¥Â¸Æ’Ã£ÂÂ®Ã£â€šÂ·Ã£Æ’Â¼Ã£Æ’Ë†
+        if (reportData.containsKey("error_distribution")) {
+            @SuppressWarnings("unchecked")
+            Map<String, Integer> errorCounts = 
+                (Map<String, Integer>) reportData.get("error_distribution");
+            
+            XSSFSheet sheet = workbook.createSheet("Error Distribution");
+            chartService.createExcelChart(workbook, sheet, 
+                "Error Distribution", errorCounts, 0, 0);
+        }
+    }

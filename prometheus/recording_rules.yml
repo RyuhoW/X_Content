@@ -1,0 +1,6 @@
+# Cache Execution Metrics
+cache_execution_duration_seconds_bucket{schedule_id="",cache_name="",status=""}
+cache_execution_processed_keys_total{schedule_id="",cache_name=""}
+cache_execution_failed_keys_total{schedule_id="",cache_name=""}
+cache_execution_success_rate{schedule_id="",cache_name=""}
+cache_execution_error_total{schedule_id="",cache_name=""}

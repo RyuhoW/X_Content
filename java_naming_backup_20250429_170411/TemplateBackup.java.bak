@@ -1,0 +1,91 @@
+package com.xcontent.model;
+
+import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+import java.util.*;
+
+@Data
+@Document(collection = "template_backups")
+public class TemplateBackup {
+    @Id
+    private String id;
+    private String templateId;
+    private String version;
+    private BackupType type;
+    private BackupStatus status;
+    private String backupPath;
+    private Long backupSize;
+    private String checksum;
+    private Long createdAt;
+    private String createdBy;
+    private Long expiresAt;
+    private Map<String, Object> metadata;
+    private List<BackupValidation> validations;
+    private List<String> includedFiles;
+    private Map<String, String> checksums;
+}
+
+@Data
+@Document(collection = "restore_points")
+public class RestorePoint {
+    @Id
+    private String id;
+    private String templateId;
+    private String version;
+    private String backupId;
+    private RestorePointType type;
+    private RestorePointStatus status;
+    private Long createdAt;
+    private String createdBy;
+    private String description;
+    private Map<String, Object> metadata;
+    private List<String> tags;
+    private List<DependencySnapshot> dependencies;
+}
+
+@Data
+public class BackupValidation {
+    private String component;
+    private ValidationStatus status;
+    private String message;
+    private Map<String, Object> details;
+}
+
+@Data
+public class DependencySnapshot {
+    private String dependencyId;
+    private String version;
+    private String checksum;
+    private Map<String, Object> metadata;
+}
+
+public enum BackupType {
+    FULL,
+    INCREMENTAL,
+    SNAPSHOT,
+    SCHEDULED
+}
+
+public enum BackupStatus {
+    PENDING,
+    IN_PROGRESS,
+    COMPLETED,
+    FAILED,
+    EXPIRED
+}
+
+public enum RestorePointType {
+    AUTO,
+    MANUAL,
+    SCHEDULED,
+    PRE_DEPLOYMENT
+}
+
+public enum RestorePointStatus {
+    AVAILABLE,
+    RESTORING,
+    RESTORED,
+    FAILED,
+    EXPIRED
+}

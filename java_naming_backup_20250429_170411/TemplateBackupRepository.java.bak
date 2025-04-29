@@ -1,0 +1,32 @@
+package com.xcontent.repository;
+
+import com.xcontent.model.*;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.stereotype.Repository;
+import java.util.*;
+
+@Repository
+public interface TemplateBackupRepository extends MongoRepository<TemplateBackup, String> {
+    Optional<TemplateBackup> findFirstByTemplateIdAndVersionOrderByCreatedAtDesc(
+        String templateId,
+        String version
+    );
+    List<TemplateBackup> findByExpiresAtLessThan(Long expiresAt);
+    List<TemplateBackup> findByTemplateIdAndVersion(
+        String templateId,
+        String version
+    );
+}
+
+@Repository
+public interface RestorePointRepository extends MongoRepository<RestorePoint, String> {
+    List<RestorePoint> findByTemplateIdAndVersion(
+        String templateId,
+        String version
+    );
+    List<RestorePoint> findByTemplateIdAndVersionAndType(
+        String templateId,
+        String version,
+        RestorePointType type
+    );
+}

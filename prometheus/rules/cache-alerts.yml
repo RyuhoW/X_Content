@@ -1,0 +1,16 @@
+﻿groups:
+  - name: CacheExecutionAlerts
+    rules:
+    # 高い失敗率のアラート
+    - alert: HighCacheExecutionFailureRate
+      expr: |
+        (
+          rate(cache_execution_error_total[15m]) /
+          rate(cache_execution_duration_seconds_count[15m])
+        ) > 0.1
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: High cache execution failure rate
+        description: "Cache {{ $labels.cache_name }} has failure rate above 10% (current value: {{ $value | printf \"%.2f\" }})"

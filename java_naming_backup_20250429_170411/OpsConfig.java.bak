@@ -1,0 +1,77 @@
+package com.xcontent.ops.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import io.micrometer.core.instrument.MeterRegistry;
+import java.util.*;
+
+@Configuration
+@EnableScheduling
+public class OpsConfig {
+
+    @Bean
+    public SystemMonitor systemMonitor(MeterRegistry registry) {
+        return new SystemMonitor(registry);
+    }
+
+    @Bean
+    public ResourceManager resourceManager() {
+        return new ResourceManager();
+    }
+
+    @Bean
+    public AutoScaler autoScaler() {
+        return new AutoScaler();
+    }
+
+    @Bean
+    public RecoveryManager recoveryManager() {
+        return new RecoveryManager();
+    }
+}
+
+@Configuration
+public class MonitoringConfig {
+    
+    @Bean
+    public HealthCheckRegistry healthCheckRegistry() {
+        HealthCheckRegistry registry = new HealthCheckRegistry();
+        
+        registry.register("database", new DatabaseHealthCheck());
+        registry.register("cache", new CacheHealthCheck());
+        registry.register("storage", new StorageHealthCheck());
+        registry.register("queue", new QueueHealthCheck());
+        
+        return registry;
+    }
+
+    @Bean
+    public MetricsCollector metricsCollector(MeterRegistry registry) {
+        return new MetricsCollector(registry);
+    }
+
+    @Bean
+    public AlertManager alertManager() {
+        return new AlertManager();
+    }
+}
+
+@Configuration
+public class RecoveryConfig {
+    
+    @Bean
+    public BackupManager backupManager() {
+        return new BackupManager();
+    }
+
+    @Bean
+    public FailoverManager failoverManager() {
+        return new FailoverManager();
+    }
+
+    @Bean
+    public DataReconciliationManager reconciliationManager() {
+        return new DataReconciliationManager();
+    }
+}

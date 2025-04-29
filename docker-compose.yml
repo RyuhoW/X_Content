@@ -1,0 +1,74 @@
+version: '3.8'
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus:/etc/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - monitoring
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: alertmanager
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./alertmanager:/etc/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/config.yml'
+    networks:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    depends_on:
+      - prometheus
+    networks:
+      - monitoring
+
+networks:
+  monitoring:
+    driver: bridge
+
+cache:
+  warmup:
+    enabled: true
+    on-startup: true
+    batch-size: 100
+    thread-count: 4
+    priority-caches:
+      - userCache
+      - productCache
+    strategies:
+      userCache:
+        type: DATABASE
+        key-pattern: "user:*"
+        priority: 1
+        parallel: true
+        parameters:
+          table: users
+          batch-size: "100"
+      productCache:
+        type: API
+        key-pattern: "product:*"
+        priority: 2
+        parallel: true
+        parameters:
+          api-url: "http://api.example.com/products"
+          batch-size: "50"

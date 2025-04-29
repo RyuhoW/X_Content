@@ -1,0 +1,277 @@
+package com.xcontent.data.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+
+@Service
+public class DataCleanupService {
+    @Autowired
+    private DataCleanupManager cleanupManager;
+    @Autowired
+    private RetentionPolicyManager policyManager;
+
+    public void executeCleanup(String dataType) {
+        CleanupStrategy strategy = cleanupManager.getStrategy(dataType);
+        RetentionPolicy policy = policyManager.getPolicy(dataType);
+        
+        CleanupJob job = CleanupJob.builder()
+            .dataType(dataType)
+            .strategy(strategy)
+            .policy(policy)
+            .startTime(System.currentTimeMillis())
+            .build();
+
+        executeCleanupJob(job);
+    }
+
+    @Async
+    public CompletableFuture<CleanupResult> executeCleanupJob(CleanupJob job) {
+        try {
+            // Ã£Æ’â€¡Ã£Æ’Â¼Ã£â€šÂ¿Ã£ÂÂ®Ã§â€°Â¹Ã¥Â®Å¡
+            List<DataItem> itemsToClean = job.getStrategy()
+                .identifyItemsToClean(job.getPolicy());
+
+            // Ã£â€šÂ¯Ã£Æ’ÂªÃ£Æ’Â¼Ã£Æ’Â³Ã£â€šÂ¢Ã£Æ’Æ’Ã£Æ’â€”Ã£ÂÂ®Ã¥Â®Å¸Ã¨Â¡Å’
+            CleanupResult result = job.getStrategy()
+                .cleanup(itemsToClean);
+
+            // Ã§ÂµÂÃ¦Å¾Å“Ã£ÂÂ®Ã¨Â¨ËœÃ©Å’Â²
+            logCleanupResult(job, result);
+            
+            return CompletableFuture.completedFuture(result);
+            
+        } catch (Exception e) {
+            handleCleanupError(job, e);
+            return CompletableFuture.failedFuture(e);
+        }
+    }
+
+    @Scheduled(cron = "0 0 2 * * *") // Ã¦Â¯Å½Ã¦â€”Â¥Ã¥ÂË†Ã¥â€°Â2Ã¦â„¢â€šÃ£ÂÂ«Ã¥Â®Å¸Ã¨Â¡Å’
+    public void executeScheduledCleanup() {
+        List<String> dataTypes = cleanupManager.getScheduledDataTypes();
+        
+        for (String dataType : dataTypes) {
+            executeCleanup(dataType);
+        }
+    }
+}
+
+@Service
+public class ArchiveService {
+    @Autowired
+    private ArchiveManager archiveManager;
+    @Autowired
+    private ArchiveStorageProvider storageProvider;
+
+    public void createArchive(ArchiveRequest request) {
+        validateArchiveRequest(request);
+        
+        ArchiveJob job = ArchiveJob.builder()
+            .type(request.getType())
+            .source(request.getSource())
+            .destination(request.getDestination())
+            .compression(request.getCompression())
+            .metadata(request.getMetadata())
+            .build();
+
+        executeArchiveJob(job);
+    }
+
+    @Async
+    public CompletableFuture<ArchiveResult> executeArchiveJob(ArchiveJob job) {
+        try {
+            // Ã£Æ’â€¡Ã£Æ’Â¼Ã£â€šÂ¿Ã£ÂÂ®Ã¥ÂÅ½Ã©â€ºâ€ 
+            List<ArchiveItem> items = archiveManager
+                .collectItems(job.getSource());
+
+            // Ã¥Å“Â§Ã§Â¸Â®Ã£ÂÂ®Ã¥Â®Å¸Ã¨Â¡Å’
+            byte[] compressedData = archiveManager
+                .compressItems(items, job.getCompression());
+
+            // Ã£â€šÂ¢Ã£Æ’Â¼Ã£â€šÂ«Ã£â€šÂ¤Ã£Æ’â€“Ã£ÂÂ®Ã¤Â¿ÂÃ¥Â­Ëœ
+            String archiveId = storageProvider
+                .storeArchive(compressedData, job.getMetadata());
+
+            // Ã§ÂµÂÃ¦Å¾Å“Ã£ÂÂ®Ã¨Â¨ËœÃ©Å’Â²
+            ArchiveResult result = recordArchiveResult(job, archiveId);
+            
+            return CompletableFuture.completedFuture(result);
+            
+        } catch (Exception e) {
+            handleArchiveError(job, e);
+            return CompletableFuture.failedFuture(e);
+        }
+    }
+
+    public void restoreArchive(String archiveId) {
+        ArchiveMetadata metadata = storageProvider
+            .getArchiveMetadata(archiveId);
+        
+        byte[] archiveData = storageProvider
+            .retrieveArchive(archiveId);
+        
+        List<ArchiveItem> items = archiveManager
+            .extractItems(archiveData);
+        
+        archiveManager.restoreItems(items, metadata);
+    }
+}
+
+@Service
+public class DataMigrationService {
+    @Autowired
+    private DataMigrationManager migrationManager;
+    @Autowired
+    private ValidationService validationService;
+
+    public void initiateMigration(MigrationConfig config) {
+        validateMigrationConfig(config);
+        
+        MigrationJob job = MigrationJob.builder()
+            .source(config.getSource())
+            .target(config.getTarget())
+            .dataType(config.getDataType())
+            .options(config.getOptions())
+            .build();
+
+        executeMigrationJob(job);
+    }
+
+    @Async
+    public CompletableFuture<MigrationResult> executeMigrationJob(
+            MigrationJob job) {
+        try {
+            // Ã£Æ’â€¡Ã£Æ’Â¼Ã£â€šÂ¿Ã£ÂÂ®Ã¦Å Â½Ã¥â€¡Âº
+            DataSet sourceData = migrationManager
+                .extractData(job.getSource());
+
+            // Ã£Æ’â€¡Ã£Æ’Â¼Ã£â€šÂ¿Ã£ÂÂ®Ã¥Â¤â€°Ã¦Ââ€º
+            DataSet transformedData = migrationManager
+                .transformData(sourceData, job.getOptions());
+
+            // Ã£Æ’â€¡Ã£Æ’Â¼Ã£â€šÂ¿Ã£ÂÂ®Ã¦Â¤Å“Ã¨Â¨Â¼
+            validationService.validateData(
+                transformedData,
+                job.getDataType()
+            );
+
+            // Ã£Æ’â€¡Ã£Æ’Â¼Ã£â€šÂ¿Ã£ÂÂ®Ã£Æ’Â­Ã£Æ’Â¼Ã£Æ’â€°
+            migrationManager.loadData(
+                transformedData,
+                job.getTarget()
+            );
+
+            // Ã§ÂµÂÃ¦Å¾Å“Ã£ÂÂ®Ã¨Â¨ËœÃ©Å’Â²
+            MigrationResult result = recordMigrationResult(job);
+            
+            return CompletableFuture.completedFuture(result);
+            
+        } catch (Exception e) {
+            handleMigrationError(job, e);
+            return CompletableFuture.failedFuture(e);
+        }
+    }
+
+    public MigrationStatus checkMigrationStatus(String jobId) {
+        return migrationManager.getMigrationStatus(jobId);
+    }
+
+    public void rollbackMigration(String jobId) {
+        migrationManager.rollbackMigration(jobId);
+    }
+}
+
+@Service
+public class BackupRestoreService {
+    @Autowired
+    private BackupRestoreManager backupManager;
+    @Autowired
+    private ValidationService validationService;
+
+    public void createBackup(BackupRequest request) {
+        validateBackupRequest(request);
+        
+        BackupJob job = BackupJob.builder()
+            .type(request.getType())
+            .source(request.getSource())
+            .options(request.getOptions())
+            .metadata(request.getMetadata())
+            .build();
+
+        executeBackupJob(job);
+    }
+
+    @Async
+    public CompletableFuture<BackupResult> executeBackupJob(BackupJob job) {
+        try {
+            // Ã£Æ’â€¡Ã£Æ’Â¼Ã£â€šÂ¿Ã£ÂÂ®Ã¥ÂÅ½Ã©â€ºâ€ 
+            DataSet sourceData = backupManager
+                .collectData(job.getSource());
+
+            // Ã£Æ’â€¡Ã£Æ’Â¼Ã£â€šÂ¿Ã£ÂÂ®Ã¦Â¤Å“Ã¨Â¨Â¼
+            validationService.validateBackupData(sourceData);
+
+            // Ã£Æ’ÂÃ£Æ’Æ’Ã£â€šÂ¯Ã£â€šÂ¢Ã£Æ’Æ’Ã£Æ’â€”Ã£ÂÂ®Ã¤Â½Å“Ã¦Ë†Â
+            String backupId = backupManager
+                .createBackup(sourceData, job.getOptions());
+
+            // Ã£Æ’Â¡Ã£â€šÂ¿Ã£Æ’â€¡Ã£Æ’Â¼Ã£â€šÂ¿Ã£ÂÂ®Ã¤Â¿ÂÃ¥Â­Ëœ
+            backupManager.saveBackupMetadata(
+                backupId,
+                job.getMetadata()
+            );
+
+            // Ã§ÂµÂÃ¦Å¾Å“Ã£ÂÂ®Ã¨Â¨ËœÃ©Å’Â²
+            BackupResult result = recordBackupResult(job, backupId);
+            
+            return CompletableFuture.completedFuture(result);
+            
+        } catch (Exception e) {
+            handleBackupError(job, e);
+            return CompletableFuture.failedFuture(e);
+        }
+    }
+
+    public void restoreBackup(
+            String backupId,
+            RestoreOptions options) {
+        
+        validateRestoreOptions(options);
+        
+        RestoreJob job = RestoreJob.builder()
+            .backupId(backupId)
+            .options(options)
+            .build();
+
+        executeRestoreJob(job);
+    }
+
+    @Async
+    public CompletableFuture<RestoreResult> executeRestoreJob(RestoreJob job) {
+        try {
+            // Ã£Æ’ÂÃ£Æ’Æ’Ã£â€šÂ¯Ã£â€šÂ¢Ã£Æ’Æ’Ã£Æ’â€”Ã£Æ’â€¡Ã£Æ’Â¼Ã£â€šÂ¿Ã£ÂÂ®Ã¥Ââ€“Ã¥Â¾â€”
+            DataSet backupData = backupManager
+                .getBackupData(job.getBackupId());
+
+            // Ã£Æ’â€¡Ã£Æ’Â¼Ã£â€šÂ¿Ã£ÂÂ®Ã¦Â¤Å“Ã¨Â¨Â¼
+            validationService.validateRestoreData(backupData);
+
+            // Ã£Æ’ÂªÃ£â€šÂ¹Ã£Æ’Ë†Ã£â€šÂ¢Ã£ÂÂ®Ã¥Â®Å¸Ã¨Â¡Å’
+            backupManager.restoreData(
+                backupData,
+                job.getOptions()
+            );
+
+            // Ã§ÂµÂÃ¦Å¾Å“Ã£ÂÂ®Ã¨Â¨ËœÃ©Å’Â²
+            RestoreResult result = recordRestoreResult(job);
+            
+            return CompletableFuture.completedFuture(result);
+            
+        } catch (Exception e) {
+            handleRestoreError(job, e);
+            return CompletableFuture.failedFuture(e);
+        }
+    }
+}

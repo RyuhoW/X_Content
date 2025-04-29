@@ -1,0 +1,77 @@
+package com.xcontent.data.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import java.util.*;
+
+@Configuration
+@EnableScheduling
+public class DataManagementConfig {
+
+    @Bean
+    public DataCleanupManager cleanupManager() {
+        return new DataCleanupManager();
+    }
+
+    @Bean
+    public ArchiveManager archiveManager() {
+        return new ArchiveManager();
+    }
+
+    @Bean
+    public DataMigrationManager migrationManager() {
+        return new DataMigrationManager();
+    }
+
+    @Bean
+    public BackupRestoreManager backupRestoreManager() {
+        return new BackupRestoreManager();
+    }
+}
+
+@Configuration
+public class CleanupConfig {
+    
+    @Bean
+    public CleanupStrategyFactory cleanupStrategyFactory() {
+        CleanupStrategyFactory factory = new CleanupStrategyFactory();
+        
+        factory.registerStrategy("template", new TemplateCleanupStrategy());
+        factory.registerStrategy("version", new VersionCleanupStrategy());
+        factory.registerStrategy("audit", new AuditCleanupStrategy());
+        factory.registerStrategy("temp", new TempFileCleanupStrategy());
+        
+        return factory;
+    }
+
+    @Bean
+    public RetentionPolicyManager retentionPolicyManager() {
+        return new RetentionPolicyManager();
+    }
+}
+
+@Configuration
+public class ArchiveConfig {
+    
+    @Bean
+    public ArchiveStorageProvider archiveStorageProvider(
+            @Value("${archive.storage.type}") String storageType) {
+        
+        switch (storageType.toLowerCase()) {
+            case "s3":
+                return new S3ArchiveStorage();
+            case "glacier":
+                return new GlacierArchiveStorage();
+            case "azure":
+                return new AzureArchiveStorage();
+            default:
+                return new LocalArchiveStorage();
+        }
+    }
+
+    @Bean
+    public ArchiveCompressionStrategy compressionStrategy() {
+        return new ZipCompressionStrategy();
+    }
+}
