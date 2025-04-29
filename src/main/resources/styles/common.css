@@ -1,0 +1,74 @@
+/* Color Variables */
+* {
+    -fx-primary: #1da1f2;
+    -fx-primary-dark: #1991db;
+    -fx-secondary: #657786;
+    -fx-light-gray: #f5f5f5;
+    -fx-dark-gray: #14171a;
+    -fx-white: #ffffff;
+    -fx-error: #e0245e;
+    -fx-success: #17bf63;
+}
+
+/* Common Styles */
+.root {
+    -fx-font-family: 'Segoe UI', Arial, sans-serif;
+    -fx-font-size: 14px;
+}
+
+/* Button Styles */
+.button {
+    -fx-background-color: -fx-primary;
+    -fx-text-fill: -fx-white;
+    -fx-padding: 8px 16px;
+    -fx-cursor: hand;
+    -fx-background-radius: 4px;
+}
+
+.button:hover {
+    -fx-background-color: -fx-primary-dark;
+}
+
+.button.secondary {
+    -fx-background-color: -fx-secondary;
+}
+
+.button.secondary:hover {
+    -fx-background-color: derive(-fx-secondary, -10%);
+}
+
+/* Text Field Styles */
+.text-field {
+    -fx-background-color: -fx-white;
+    -fx-border-color: -fx-secondary;
+    -fx-border-radius: 4px;
+    -fx-padding: 8px;
+}
+
+.text-field:focused {
+    -fx-border-color: -fx-primary;
+}
+
+/* List View Styles */
+.list-view {
+    -fx-background-color: -fx-white;
+    -fx-border-color: -fx-secondary;
+    -fx-border-radius: 4px;
+}
+
+/* Tab Pane Styles */
+.tab-pane {
+    -fx-tab-min-height: 30px;
+}
+
+.tab {
+    -fx-background-color: -fx-light-gray;
+}
+
+.tab:selected {
+    -fx-background-color: -fx-primary;
+}
+
+.tab:selected .tab-label {
+    -fx-text-fill: -fx-white;
+} 

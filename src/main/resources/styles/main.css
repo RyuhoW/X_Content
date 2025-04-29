@@ -1,14 +1,28 @@
+@import "common.css";
+
 .main-window {
-    -fx-background-color: #f5f5f5;
+    -fx-background-color: -fx-light-gray;
 }
 
 .sidebar {
-    -fx-background-color: #ffffff;
+    -fx-background-color: -fx-white;
     -fx-min-width: 200px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 0);
+}
+
+.nav-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: -fx-dark-gray;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 10px 15px;
+}
+
+.nav-button:hover {
+    -fx-background-color: derive(-fx-primary, 90%);
 }
 
 .content-area {
-    -fx-background-color: #ffffff;
+    -fx-background-color: -fx-white;
     -fx-padding: 20px;
 }
 
@@ -18,7 +32,24 @@
 }
 
 .status-bar {
-    -fx-background-color: #eeeeee;
+    -fx-background-color: -fx-light-gray;
+    -fx-border-color: -fx-secondary;
+    -fx-border-width: 1px 0 0 0;
+}
+
+.status-section {
+    -fx-spacing: 5;
+    -fx-padding: 10px 0;
+    -fx-border-color: -fx-secondary;
+    -fx-border-width: 1px 0 0 0;
+}
+
+#mainTabPane {
+    -fx-background-color: transparent;
+}
+
+#mainTabPane .tab-header-area {
+    -fx-padding: 0 0 0 20;
 }
 
 .button {
