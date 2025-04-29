@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox spacing="10" xmlns:fx="http://javafx.com/fxml/1" 
+      fx:controller="com.xcontent.controller.ContentEditorController">
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20"/>
+    </padding>
+
+    <HBox spacing="10" alignment="CENTER_LEFT">
+        <Label text="Content Editor" styleClass="title-text"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <ComboBox fx:id="templateComboBox" promptText="Select Template"/>
+    </HBox>
+
+    <TextArea fx:id="contentTextArea" prefRowCount="8" promptText="Enter your content here..."/>
+    
+    <HBox spacing="10">
+        <TextField fx:id="hashtagField" promptText="Add hashtag" HBox.hgrow="ALWAYS"/>
+        <Button text="Add" onAction="#handleAddHashtag"/>
+    </HBox>
+
+    <FlowPane fx:id="hashtagContainer" hgap="5" vgap="5"/>
+
+    <HBox spacing="10">
+        <Button text="Add Media" onAction="#handleAddMedia"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Label fx:id="characterCountLabel" text="0/280"/>
+    </HBox>
+
+    <ListView fx:id="mediaListView" prefHeight="100"/>
+
+    <HBox spacing="10" alignment="CENTER_RIGHT">
+        <Button text="Preview" onAction="#handlePreview"/>
+        <Button text="Save Draft" onAction="#handleSaveDraft"/>
+        <Button text="Schedule" onAction="#handleSchedule"/>
+        <Button text="Post Now" onAction="#handlePostNow"/>
+    </HBox>
+</VBox>
