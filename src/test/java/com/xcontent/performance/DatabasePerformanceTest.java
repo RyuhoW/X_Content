@@ -2,7 +2,7 @@ package com.xcontent.performance;
 
 import com.xcontent.config.DatabaseConfig;
 import com.xcontent.model.Content;
-import com.xcontent.repository.ContentRepository;
+import com.xcontent.repository.impl.ContentRepositoryImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -21,13 +21,13 @@ import static org.junit.jupiter.api.Assertions.*;
 @Tag("performance")
 public class DatabasePerformanceTest {
 
-    private ContentRepository contentRepository;
+    private ContentRepositoryImpl contentRepository;
     private ExecutorService executorService;
 
     @BeforeEach
     void setUp() {
         DatabaseConfig.initialize();
-        contentRepository = new ContentRepository();
+        contentRepository = new ContentRepositoryImpl();
         executorService = Executors.newFixedThreadPool(10);
     }
 

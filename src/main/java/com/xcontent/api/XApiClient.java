@@ -11,6 +11,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class XApiClient implements AutoCloseable {
@@ -46,6 +47,37 @@ public class XApiClient implements AutoCloseable {
                     logger.error("Error posting tweet", e);
                     throw new XApiException("Failed to post tweet", e);
                 });
+    }
+
+    private String createTweetJson(String text, List<String> mediaIds) {
+        StringBuilder json = new StringBuilder();
+        json.append("{");
+        json.append("\"text\":\"").append(escapeJson(text)).append("\"");
+        
+        if (mediaIds != null && !mediaIds.isEmpty()) {
+            json.append(",\"media\":{\"media_ids\":[");
+            for (int i = 0; i < mediaIds.size(); i++) {
+                if (i > 0) json.append(",");
+                json.append("\"").append(escapeJson(mediaIds.get(i))).append("\"");
+            }
+            json.append("]}");
+        }
+        
+        json.append("}");
+        
+        logger.debug("Created tweet JSON: {}", json);
+        return json.toString();
+    }
+
+    private String escapeJson(String text) {
+        if (text == null) {
+            return "";
+        }
+        return text.replace("\\", "\\\\")
+                  .replace("\"", "\\\"")
+                  .replace("\n", "\\n")
+                  .replace("\r", "\\r")
+                  .replace("\t", "\\t");
     }
 
     public CompletableFuture<String> uploadMedia(byte[] media, String mediaType) {
