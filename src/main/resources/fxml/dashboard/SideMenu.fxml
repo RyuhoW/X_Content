@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox spacing="10" styleClass="side-menu" 
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.xcontent.controller.dashboard.SideMenuController">
+    
+    <padding>
+        <Insets top="20" right="10" bottom="20" left="10"/>
+    </padding>
+
+    <!-- ユーザー情報 -->
+    <VBox spacing="5" styleClass="user-info">
+        <Label fx:id="userNameLabel" styleClass="user-name"/>
+        <Label fx:id="userEmailLabel" styleClass="user-email"/>
+    </VBox>
+
+    <!-- メニューアイテム -->
+    <VBox spacing="5" styleClass="menu-items" VBox.vgrow="ALWAYS">
+        <Button text="Dashboard" onAction="#handleDashboard" styleClass="menu-button"/>
+        <Button text="Content" onAction="#handleContent" styleClass="menu-button"/>
+        <Button text="Schedule" onAction="#handleSchedule" styleClass="menu-button"/>
+        <Button text="Analytics" onAction="#handleAnalytics" styleClass="menu-button"/>
+        <Button text="Settings" onAction="#handleSettings" styleClass="menu-button"/>
+    </VBox>
+
+    <!-- ログアウト -->
+    <Button text="Logout" onAction="#handleLogout" styleClass="logout-button"/>
+</VBox>

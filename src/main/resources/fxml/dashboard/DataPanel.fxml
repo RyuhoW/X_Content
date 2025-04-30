@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<HBox spacing="20" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.xcontent.controller.dashboard.DataPanelController">
+    
+    <!-- 投稿数 -->
+    <VBox styleClass="metric-card">
+        <Label text="Total Posts" styleClass="metric-title"/>
+        <Label fx:id="totalPostsLabel" styleClass="metric-value"/>
+        <Label fx:id="postsChangeLabel" styleClass="metric-change"/>
+    </VBox>
+
+    <!-- エンゲージメント -->
+    <VBox styleClass="metric-card">
+        <Label text="Engagement Rate" styleClass="metric-title"/>
+        <Label fx:id="engagementRateLabel" styleClass="metric-value"/>
+        <Label fx:id="engagementChangeLabel" styleClass="metric-change"/>
+    </VBox>
+
+    <!-- インプレッション -->
+    <VBox styleClass="metric-card">
+        <Label text="Impressions" styleClass="metric-title"/>
+        <Label fx:id="impressionsLabel" styleClass="metric-value"/>
+        <Label fx:id="impressionsChangeLabel" styleClass="metric-change"/>
+    </VBox>
+
+    <!-- スケジュール済み投稿 -->
+    <VBox styleClass="metric-card">
+        <Label text="Scheduled Posts" styleClass="metric-title"/>
+        <Label fx:id="scheduledPostsLabel" styleClass="metric-value"/>
+        <Label fx:id="scheduledChangeLabel" styleClass="metric-change"/>
+    </VBox>
+</HBox>
