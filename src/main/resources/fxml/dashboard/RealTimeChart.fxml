@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.chart.*?>
+
+<VBox xmlns:fx="http://javafx.com/fxml/1" 
+      fx:controller="com.xcontent.controller.dashboard.RealTimeChartController"
+      spacing="10">
+    
+    <LineChart fx:id="realTimeChart" 
+               createSymbols="false" 
+               animated="false">
+        <xAxis>
+            <NumberAxis fx:id="xAxis" 
+                       label="Time" 
+                       animated="false"/>
+        </xAxis>
+        <yAxis>
+            <NumberAxis fx:id="yAxis" 
+                       label="Value" 
+                       animated="false"/>
+        </yAxis>
+    </LineChart>
+</VBox>
