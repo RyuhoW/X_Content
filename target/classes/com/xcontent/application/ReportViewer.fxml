@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.web.WebView?>
+<?import javafx.geometry.Insets?>
+
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.xcontent.controller.ReportViewerController"
+      spacing="10" padding="15">
+
+    <HBox spacing="10" alignment="CENTER_LEFT">
+        <ComboBox fx:id="reportSelector" promptText="レポートを選択"/>
+        <Button fx:id="exportButton" text="エクスポート" onAction="#handleExport"/>
+        <Button fx:id="printButton" text="印刷" onAction="#handlePrint"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button fx:id="refreshButton" text="更新" onAction="#handleRefresh"/>
+    </HBox>
+
+    <WebView fx:id="reportWebView" VBox.vgrow="ALWAYS"/>
+</VBox> 

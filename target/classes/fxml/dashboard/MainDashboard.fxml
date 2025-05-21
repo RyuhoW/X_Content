@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" 
+            fx:controller="com.xcontent.controller.dashboard.MainDashboardController"
+            stylesheets="@../../styles/dashboard.css">
+    
+    <left>
+        <fx:include source="SideMenu.fxml"/>
+    </left>
+    
+    <center>
+        <VBox spacing="10">
+            <padding>
+                <Insets top="20" right="20" bottom="20" left="20"/>
+            </padding>
+            
+            <!-- ヘッダー部分 -->
+            <HBox spacing="10" alignment="CENTER_LEFT" styleClass="dashboard-header">
+                <Label fx:id="pageTitle" styleClass="page-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="Refresh" onAction="#handleRefresh"/>
+            </HBox>
+            
+            <!-- メインコンテンツエリア -->
+            <GridPane hgap="10" vgap="10" VBox.vgrow="ALWAYS">
+                <!-- 上段: 主要メトリクス -->
+                <HBox spacing="10" GridPane.columnIndex="0" GridPane.rowIndex="0" 
+                      GridPane.columnSpan="2" styleClass="metrics-container">
+                    <fx:include source="DataPanel.fxml"/>
+                </HBox>
+                
+                <!-- 下段左: グラフ -->
+                <VBox spacing="10" GridPane.columnIndex="0" GridPane.rowIndex="1" 
+                      styleClass="chart-container">
+                    <LineChart fx:id="engagementChart" title="Engagement Trend">
+                        <xAxis>
+                            <CategoryAxis label="Time"/>
+                        </xAxis>
+                        <yAxis>
+                            <NumberAxis label="Engagement"/>
+                        </yAxis>
+                    </LineChart>
+                </VBox>
+                
+                <!-- 下段右: アクティビティリスト -->
+                <VBox spacing="10" GridPane.columnIndex="1" GridPane.rowIndex="1" 
+                      styleClass="activity-container">
+                    <Label text="Recent Activity"/>
+                    <ListView fx:id="activityList" VBox.vgrow="ALWAYS"/>
+                </VBox>
+            </GridPane>
+        </VBox>
+    </center>
+</BorderPane>

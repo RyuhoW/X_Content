@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.xcontent.controller.ReportSchedulerController"
+      spacing="10" padding="15">
+
+    <HBox spacing="10" alignment="CENTER_LEFT">
+        <Button fx:id="addScheduleButton" text="新規スケジュール" onAction="#handleAddSchedule"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <ComboBox fx:id="filterStatus" promptText="ステータス"/>
+    </HBox>
+
+    <TableView fx:id="scheduleTable" VBox.vgrow="ALWAYS">
+        <columns>
+            <TableColumn fx:id="templateNameColumn" text="テンプレート" prefWidth="200"/>
+            <TableColumn fx:id="scheduleTypeColumn" text="スケジュール種別" prefWidth="150"/>
+            <TableColumn fx:id="nextRunColumn" text="次回実行" prefWidth="150"/>
+            <TableColumn fx:id="recipientColumn" text="送信先" prefWidth="200"/>
+            <TableColumn fx:id="statusColumn" text="ステータス" prefWidth="100"/>
+            <TableColumn fx:id="actionsColumn" text="操作" prefWidth="150"/>
+        </columns>
+    </TableView>
+</VBox> 

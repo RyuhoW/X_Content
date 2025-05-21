@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" 
+            fx:controller="com.xcontent.controller.dashboard.PredictiveDashboardController"
+            stylesheets="@../../styles/predictive.css">
+    
+    <top>
+        <VBox spacing="10">
+            <padding>
+                <Insets top="20" right="20" bottom="10" left="20"/>
+            </padding>
+            
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <Label text="Predictive Analytics" styleClass="dashboard-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="New Prediction" onAction="#handleNewPrediction"/>
+            </HBox>
+            
+            <!-- 予測設定パネル -->
+            <GridPane hgap="10" vgap="10" styleClass="prediction-settings">
+                <Label text="Content Type:" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                <ComboBox fx:id="contentTypeCombo" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                
+                <Label text="Time Range:" GridPane.columnIndex="2" GridPane.rowIndex="0"/>
+                <ComboBox fx:id="timeRangeCombo" GridPane.columnIndex="3" GridPane.rowIndex="0"/>
+                
+                <Label text="Confidence Level:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                <Slider fx:id="confidenceSlider" 
+                        min="0" max="1" value="0.95"
+                        GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                
+                <Label text="Model Version:" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+                <ComboBox fx:id="modelVersionCombo" GridPane.columnIndex="3" GridPane.rowIndex="1"/>
+            </GridPane>
+        </VBox>
+    </top>
+    
+    <center>
+        <TabPane>
+            <Tab text="Predictions" closable="false">
+                <VBox spacing="10">
+                    <padding>
+                        <Insets top="10" right="20" bottom="20" left="20"/>
+                    </padding>
+                    
+                    <!-- 予測チャート -->
+                    <fx:include source="PredictionChart.fxml"/>
+                    
+                    <!-- 予測履歴テーブル -->
+                    <TableView fx:id="predictionHistoryTable" VBox.vgrow="ALWAYS">
+                        <columns>
+                            <TableColumn text="Timestamp" fx:id="timestampColumn"/>
+                            <TableColumn text="Content" fx:id="contentColumn"/>
+                            <TableColumn text="Predicted" fx:id="predictedColumn"/>
+                            <TableColumn text="Actual" fx:id="actualColumn"/>
+                            <TableColumn text="Accuracy" fx:id="accuracyColumn"/>
+                        </columns>
+                    </TableView>
+                </VBox>
+            </Tab>
+            
+            <Tab text="Accuracy Monitoring" closable="false">
+                <fx:include source="AccuracyMonitor.fxml"/>
+            </Tab>
+        </TabPane>
+    </center>
+</BorderPane>

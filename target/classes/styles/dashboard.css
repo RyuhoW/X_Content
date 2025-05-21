@@ -1,0 +1,71 @@
+/* ダッシュボード全体 */
+.root {
+    -fx-background-color: #f5f5f5;
+    -fx-font-family: "Segoe UI", Arial, sans-serif;
+}
+
+/* サイドメニュー */
+.side-menu {
+    -fx-background-color: #1DA1F2;
+    -fx-min-width: 250px;
+    -fx-pref-width: 250px;
+}
+
+.menu-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: white;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 10 20;
+    -fx-font-size: 14px;
+}
+
+.menu-button:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* メトリクスカード */
+.metric-card {
+    -fx-background-color: white;
+    -fx-padding: 15;
+    -fx-background-radius: 5;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 10, 0, 0, 2);
+}
+
+.metric-title {
+    -fx-font-size: 14px;
+    -fx-text-fill: #657786;
+}
+
+.metric-value {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #14171A;
+}
+
+.metric-change {
+    -fx-font-size: 12px;
+}
+
+/* チャートコンテナ */
+.chart-container {
+    -fx-background-color: white;
+    -fx-padding: 15;
+    -fx-background-radius: 5;
+}
+
+/* アクティビティリスト */
+.activity-container {
+    -fx-background-color: white;
+    -fx-padding: 15;
+    -fx-background-radius: 5;
+}
+
+/* ヘッダー */
+.dashboard-header {
+    -fx-padding: 0 0 20 0;
+}
+
+.page-title {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+}

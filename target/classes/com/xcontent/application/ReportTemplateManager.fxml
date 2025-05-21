@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.xcontent.controller.ReportTemplateManagerController"
+      spacing="10" padding="15">
+
+    <HBox spacing="10" alignment="CENTER_LEFT">
+        <Button fx:id="addTemplateButton" text="新規テンプレート" onAction="#handleAddTemplate"/>
+        <Button fx:id="importTemplateButton" text="テンプレートをインポート" onAction="#handleImportTemplate"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <TextField fx:id="searchField" promptText="テンプレートを検索..."/>
+    </HBox>
+
+    <TableView fx:id="templateTable" VBox.vgrow="ALWAYS">
+        <columns>
+            <TableColumn fx:id="nameColumn" text="名前" prefWidth="200"/>
+            <TableColumn fx:id="descriptionColumn" text="説明" prefWidth="300"/>
+            <TableColumn fx:id="formatColumn" text="形式" prefWidth="100"/>
+            <TableColumn fx:id="createdAtColumn" text="作成日" prefWidth="150"/>
+            <TableColumn fx:id="actionsColumn" text="操作" prefWidth="150"/>
+        </columns>
+    </TableView>
+</VBox> 

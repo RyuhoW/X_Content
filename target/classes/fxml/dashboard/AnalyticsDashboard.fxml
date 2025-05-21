@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" 
+            fx:controller="com.xcontent.controller.dashboard.AnalyticsDashboardController"
+            stylesheets="@../../styles/analytics.css">
+    
+    <top>
+        <HBox spacing="10" styleClass="dashboard-header">
+            <padding>
+                <Insets top="10" right="20" bottom="10" left="20"/>
+            </padding>
+            
+            <Label text="Real-Time Analytics" styleClass="header-title"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <ComboBox fx:id="timeRangeCombo" promptText="Time Range"/>
+            <Button text="Refresh" onAction="#handleRefresh"/>
+        </HBox>
+    </top>
+    
+    <center>
+        <VBox spacing="20">
+            <padding>
+                <Insets top="20" right="20" bottom="20" left="20"/>
+            </padding>
+            
+            <!-- メトリクスグリッド -->
+            <GridPane hgap="20" vgap="20" styleClass="metrics-grid">
+                <VBox styleClass="metric-card" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                    <Label text="Active Users" styleClass="metric-title"/>
+                    <Label fx:id="activeUsersLabel" styleClass="metric-value"/>
+                </VBox>
+                
+                <VBox styleClass="metric-card" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                    <Label text="Engagement Rate" styleClass="metric-title"/>
+                    <Label fx:id="engagementRateLabel" styleClass="metric-value"/>
+                </VBox>
+                
+                <VBox styleClass="metric-card" GridPane.columnIndex="2" GridPane.rowIndex="0">
+                    <Label text="Response Time" styleClass="metric-title"/>
+                    <Label fx:id="responseTimeLabel" styleClass="metric-value"/>
+                </VBox>
+            </GridPane>
+            
+            <!-- リアルタイムチャート -->
+            <TabPane VBox.vgrow="ALWAYS">
+                <Tab text="Engagement Trend" closable="false">
+                    <fx:include source="RealTimeChart.fxml"/>
+                </Tab>
+                <Tab text="Performance Metrics" closable="false">
+                    <fx:include source="PerformanceMetrics.fxml"/>
+                </Tab>
+            </TabPane>
+        </VBox>
+    </center>
+</BorderPane>

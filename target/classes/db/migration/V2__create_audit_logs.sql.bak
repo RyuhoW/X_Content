@@ -1,0 +1,13 @@
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id VARCHAR(255),
+    resource_id VARCHAR(255),
+    action VARCHAR(100),
+    timestamp TIMESTAMP,
+    ip_address VARCHAR(45),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_audit_user_id (user_id),
+    INDEX idx_audit_resource_id (resource_id),
+    INDEX idx_audit_timestamp (timestamp)
+); 

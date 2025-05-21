@@ -1,0 +1,12 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.SQLiteDialect
+  datasource:
+    url: jdbc:sqlite:xcontent.db
+    driver-class-name: org.sqlite.JDBC 
