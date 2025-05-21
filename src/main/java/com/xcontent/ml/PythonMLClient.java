@@ -1,6 +1,7 @@
 package com.xcontent.ml;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.xcontent.model.Content;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

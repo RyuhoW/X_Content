@@ -50,4 +50,22 @@ CREATE TABLE IF NOT EXISTS report_generation_history (
 CREATE INDEX idx_report_templates_name ON report_templates(name);
 CREATE INDEX idx_report_configurations_template_id ON report_configurations(template_id);
 CREATE INDEX idx_report_configurations_next_run_time ON report_configurations(next_run_time);
-CREATE INDEX idx_report_generation_history_configuration_id ON report_generation_history(configuration_id); 
+CREATE INDEX idx_report_generation_history_configuration_id ON report_generation_history(configuration_id);
+
+-- 監査ログテーブル
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id VARCHAR(255),
+    resource_id VARCHAR(255),
+    action VARCHAR(100),
+    timestamp TIMESTAMP,
+    ip_address VARCHAR(45),
+    details TEXT,
+    event_type VARCHAR(50),
+    status VARCHAR(50),
+    stack_trace TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_audit_resource (resource_id),
+    INDEX idx_audit_user (user_id),
+    INDEX idx_audit_timestamp (timestamp)
+); 

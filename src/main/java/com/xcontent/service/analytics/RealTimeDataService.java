@@ -1,32 +1,40 @@
 package com.xcontent.service.analytics;
 
+import com.xcontent.model.analytics.AnalyticsData;
 import javafx.application.Platform;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.*;
 import java.util.function.Consumer;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class RealTimeDataService {
     private static final Logger logger = LoggerFactory.getLogger(RealTimeDataService.class);
     
     private final ScheduledExecutorService scheduler;
     private final DataCacheService cacheService;
-    private final ConcurrentMap<String, Consumer<AnalyticsData>> subscribers;
+    private final Map<String, Consumer<AnalyticsData>> subscribers;
+    private volatile boolean running;
     
     public RealTimeDataService() {
         this.scheduler = Executors.newScheduledThreadPool(1);
         this.cacheService = new DataCacheService();
         this.subscribers = new ConcurrentHashMap<>();
+        this.running = false;
     }
 
     public void startRealTimeUpdates() {
-        scheduler.scheduleAtFixedRate(
-            this::fetchAndUpdateData,
-            0,
-            1,
-            TimeUnit.SECONDS
-        );
+        if (!running) {
+            running = true;
+            scheduler.scheduleAtFixedRate(
+                this::fetchAndUpdateData,
+                0,
+                1,
+                TimeUnit.SECONDS
+            );
+        }
     }
 
     private void fetchAndUpdateData() {
@@ -50,15 +58,16 @@ public class RealTimeDataService {
         );
     }
 
-    public void subscribe(String id, Consumer<AnalyticsData> subscriber) {
-        subscribers.put(id, subscriber);
+    public void subscribe(String subscriberId, Consumer<AnalyticsData> callback) {
+        subscribers.put(subscriberId, callback);
     }
 
-    public void unsubscribe(String id) {
-        subscribers.remove(id);
+    public void unsubscribe(String subscriberId) {
+        subscribers.remove(subscriberId);
     }
 
     public void shutdown() {
+        running = false;
         scheduler.shutdown();
         try {
             if (!scheduler.awaitTermination(5, TimeUnit.SECONDS)) {
@@ -68,5 +77,6 @@ public class RealTimeDataService {
             scheduler.shutdownNow();
             Thread.currentThread().interrupt();
         }
+        subscribers.clear();
     }
 }

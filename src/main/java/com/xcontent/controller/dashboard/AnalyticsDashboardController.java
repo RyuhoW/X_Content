@@ -1,5 +1,6 @@
 package com.xcontent.controller.dashboard;
 
+import com.xcontent.model.analytics.AnalyticsData;
 import com.xcontent.service.analytics.RealTimeDataService;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
@@ -8,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public class AnalyticsDashboardController {
     private static final Logger logger = LoggerFactory.getLogger(AnalyticsDashboardController.class);
@@ -43,7 +45,7 @@ public class AnalyticsDashboardController {
     }
 
     private void subscribeToUpdates() {
-        dataService.subscribe(subscriberId, this::updateDashboard);
+        dataService.subscribe(subscriberId, (Consumer<AnalyticsData>) this::updateDashboard);
     }
 
     private void updateDashboard(AnalyticsData data) {

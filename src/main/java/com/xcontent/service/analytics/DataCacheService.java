@@ -2,6 +2,7 @@ package com.xcontent.service.analytics;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.xcontent.model.analytics.AnalyticsData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

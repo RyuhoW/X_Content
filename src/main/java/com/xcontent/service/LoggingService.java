@@ -28,17 +28,8 @@ public class LoggingService {
         logger.info("Report generation event: {} - {}", reportId, status);
     }
 
-    public void logError(String message, Throwable error) {
-        logger.error("Error occurred: {}", message, error);
-        
-        AuditLog log = new AuditLog();
-        log.setEventType("ERROR");
-        log.setStatus("FAILED");
-        log.setDetails(error.getMessage());
-        log.setStackTrace(getStackTraceAsString(error));
-        log.setTimestamp(LocalDateTime.now());
-        
-        auditLogRepository.save(log);
+    public static void logError(String message, Throwable error) {
+        logger.error(message, error);
     }
 
     private String getStackTraceAsString(Throwable error) {

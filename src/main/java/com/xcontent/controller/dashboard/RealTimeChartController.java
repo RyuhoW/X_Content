@@ -8,6 +8,7 @@ import javafx.scene.chart.XYChart;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 public class RealTimeChartController {
@@ -50,7 +51,7 @@ public class RealTimeChartController {
             }
             
             series.getData().add(new XYChart.Data<>(
-                data.getTimestamp().toEpochSecond(),
+                data.getTimestamp().toEpochSecond(ZoneOffset.UTC),
                 data.getEngagementRate()
             ));
         });

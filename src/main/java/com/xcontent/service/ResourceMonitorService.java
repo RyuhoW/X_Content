@@ -1,30 +1,27 @@
 package com.xcontent.service;
 
 import org.springframework.stereotype.Service;
-import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryMXBean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 public class ResourceMonitorService {
-    private final AtomicInteger activeReportGenerations = new AtomicInteger(0);
-    private final MemoryMXBean memoryBean = ManagementFactory.getMemoryMXBean();
+    private final AtomicInteger activeGenerations = new AtomicInteger(0);
+    private static final int MAX_CONCURRENT_GENERATIONS = 10;
 
     public boolean canStartNewGeneration() {
-        // メモリ使用率とアクティブな生成数をチェック
-        long usedMemory = memoryBean.getHeapMemoryUsage().getUsed();
-        long maxMemory = memoryBean.getHeapMemoryUsage().getMax();
-        
-        return activeReportGenerations.get() < 10 && 
-               (usedMemory / (double) maxMemory) < 0.8;
+        return activeGenerations.get() < MAX_CONCURRENT_GENERATIONS;
     }
 
     public void reportGenerationStarted() {
-        activeReportGenerations.incrementAndGet();
+        activeGenerations.incrementAndGet();
     }
 
     public void reportGenerationCompleted() {
-        activeReportGenerations.decrementAndGet();
+        activeGenerations.decrementAndGet();
+    }
+
+    public int getActiveGenerationCount() {
+        return activeGenerations.get();
     }
 
     public void cleanup() {

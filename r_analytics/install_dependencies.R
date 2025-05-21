@@ -1,14 +1,30 @@
 # 必要なパッケージのインストール
-install.packages(c(
-  "tidyverse",      # データ操作と可視化
-  "rmarkdown",      # レポート生成
-  "plumber",        # API作成
-  "lubridate",      # 日付処理
-  "scales",         # 可視化のスケール
-  "forecast",       # 時系列分析
-  "ggplot2",        # グラフ作成
-  "plotly",         # インタラクティブな可視化
-  "DT",             # データテーブル
-  "testthat",       # テスト
-  "jsonlite"        # JSON処理
-))
+required_packages <- c(
+  "rmarkdown",
+  "knitr",
+  "ggplot2",
+  "dplyr",
+  "tidyr",
+  "lubridate",
+  "scales",
+  "jsonlite",
+  "yaml"
+)
+
+# パッケージがインストールされていない場合のみインストール
+for (package in required_packages) {
+  if (!require(package, character.only = TRUE)) {
+    install.packages(package, repos = "https://cloud.r-project.org")
+  }
+}
+
+# renvを使用して環境を固定
+if (!require("renv")) {
+  install.packages("renv", repos = "https://cloud.r-project.org")
+}
+
+# プロジェクト環境の初期化
+renv::init()
+
+# 依存関係のスナップショットを作成
+renv::snapshot()
