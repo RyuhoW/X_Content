@@ -37,3 +37,4 @@ Thumbs.db
 application-local.properties
 
 resume/
+venv/
